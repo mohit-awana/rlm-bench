@@ -208,10 +208,10 @@ The result is a drop-in pattern for existing codebases that need cross-file reas
 
 ```bibtex
 @misc{awana2026rlmbench,
-  title  = {RLM-Bench: Recursive Language Model Navigation as a Drop-in Tool for Code Repository QA},
-  author = {Awana, Mohit},
-  year   = {2026},
-  url    = {https://github.com/mohit-awana/rlm-bench}
+  author = {Mohit Awana},
+  title = {RLM-Bench: Recursive Language Model Navigation as a Drop-in Tool for Code Repository QA},
+  year = {2026},
+  doi = {https://doi.org/10.5281/zenodo.19892314}
 }
 ```
 
