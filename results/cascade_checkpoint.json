@@ -1,0 +1,985 @@
+{
+  "results": [
+    {
+      "question_id": 1,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "Trace the complete call chain when a user calls `httpx.get(url)`. List every function called in order, with the file each function lives in.",
+      "ground_truth": "1. `httpx.get()` in `_api.py` \u2014 creates a `Client` instance using a context manager and calls `client.get(url, ...)`. 2. `Client.get()` in `_client.py` \u2014 calls `self.request('GET', url, ...)`. 3. `Client.request()` in `_client.py` \u2014 builds a `Request` object via `self.build_request()` then calls `self.send(request, ...)`. 4. `Client.send()` in `_client.py` \u2014 handles auth flow, redirects, and calls `self._send_with_response()` or `self._send_single_request()`. 5. Transport send in `_transports/default.py` \u2014 dispatches to the underlying HTTP transport. The chain is: `_api.py` -> `_client.py` (get -> request -> send) -> `_transports/default.py`.",
+      "source_files": [
+        "_api.py",
+        "_client.py",
+        "_transports/default.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The call chain when a user calls `httpx.get(url)` is as follows:\n\n1. `httpx.get(url)` (lives in the `__init__.py` file)\n2. It calls `request()` (defined in `__init__.py`)\n3. Inside `request()`, it creates a `Client` context via `with Client() as client:`\n4. Calls `client.request()` (method in `__init__.py`)\n5. Inside `client.request()`, it calls `client.build_request()` to create a `Request` object (method in `__init__.py`)\n6. Then it calls `client.send()` with the constructed `Request` object\n7. Inside `client.send()`, it calls `_build_request_auth()` (method in `__init__.py`)\n8. It calls `_send_single_request()` (method in `__init__.py`) which then:\n   - Calls `_transport_for_url()` to select a transport\n   - Calls `transport.handle_request()` with the request\n9. The `handle_request()` method is in transport classes (like `HTTPTransport` in `_transports/default.py`), which handles the actual network I/O and returns a `Response`.\n\nSo, the overall sequence includes: \n\n- `__init__.py.request()`\n- `__init__.py.Client.request()`\n- `__init__.py.Client.build_request()`\n- `__init__.py.Client.send()`\n- `__init__.py.Client._build_request_auth()`\n- `__init__.py.Client._send_single_request()`\n- Transport's `handle_request()`\n\nThis chain ensures that `httpx.get()` initiates a sequence from high-level API through client methods and finally to the transport layer responsible for network I/O.\n\nWould you like exact function signatures and file locations?",
+      "total_tokens": 23525,
+      "chunks_accessed": 2,
+      "sub_call_count": 4,
+      "elapsed_seconds": 7.171,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.3668,
+        "symbol_recall": 0.6522
+      },
+      "composite_score": 0.6455,
+      "passed": true
+    },
+    {
+      "question_id": 1,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "Trace the complete call chain when a user calls `httpx.get(url)`. List every function called in order, with the file each function lives in.",
+      "ground_truth": "1. `httpx.get()` in `_api.py` \u2014 creates a `Client` instance using a context manager and calls `client.get(url, ...)`. 2. `Client.get()` in `_client.py` \u2014 calls `self.request('GET', url, ...)`. 3. `Client.request()` in `_client.py` \u2014 builds a `Request` object via `self.build_request()` then calls `self.send(request, ...)`. 4. `Client.send()` in `_client.py` \u2014 handles auth flow, redirects, and calls `self._send_with_response()` or `self._send_single_request()`. 5. Transport send in `_transports/default.py` \u2014 dispatches to the underlying HTTP transport. The chain is: `_api.py` -> `_client.py` (get -> request -> send) -> `_transports/default.py`.",
+      "source_files": [
+        "_api.py",
+        "_client.py",
+        "_transports/default.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "When a user calls `httpx.get(url)`, the sequence of function calls with their respective files is as follows:\n\n1. `get` function in the file `_api` (Pages 3\u20133):  \n   **File:** `_api.py`  \n   **Function:** `get()`  \n   **What it does:**  \n   It internally calls `request()` with method `\"GET\"` and the provided URL, along with other optional parameters.\n\n2. `request` function in `_api.py`:  \n   **File:** `_api.py`  \n   **Function:** `request()`  \n   **What it does:**  \n   - Creates a `Client` instance (using `with Client(...) as client:`).  \n   - Calls `client.request()` with method `\"GET\"` and the parameters.\n\n3. `client.request()` method in `client` (which is an instance of `Client` class in `_client.py`, Pages 5\u20135):  \n   **File:** `_client.py`  \n   **Class:** `Client`  \n   **Method:** `request()`  \n   **What it does:**  \n   - Calls `self.build_request()` to construct a `Request` object.  \n   - Calls `self.send(request)` to send the request.\n\n4. `self.build_request()` method in `Client`:  \n   **File:** `_client.py`  \n   **Class:** `Client`  \n   **Method:** `build_request()`  \n   **What it does:**  \n   - Merges URL, headers, cookies, and query params.  \n   - Creates a `Request` instance and returns it.\n\n5. `self.send(request)` method in `Client`:  \n   **File:** `_client.py`  \n   **Class:** `Client`  \n   **Method:** `send()`  \n   **What it does:**  \n   - Checks if the client is closed.  \n   - Calls `self._build_request_auth()` for authentication handling.  \n   - Calls `self._send_handling_auth()` passing the `Request`.\n\n6. `_send_handling_auth()` in `Client`:  \n   **File:** `_client.py`  \n   **Class:** `Client`  \n   **Method:** `_send_handling_auth()`  \n   **What it does:**  \n   - Calls `auth.sync_auth_flow(request)` to handle authentication flow (for sync client).  \n   - Sends the request and handles redirects/authentication via loop with `self._send_single_request()` (or potentially redirects).\n\n7. `_send_single_request()` in `Client`:  \n   **File:** `_client.py`  \n   **Class:** `Client`  \n   **Method:** `_send_single_request()`  \n   **What it does:**  \n   - Calls `self._transport.handle_request(request)` to perform the network I/O.\n\n8. `handle_request()` method in the transport (from `_transports.default` or other in `_transports/base.py`):  \n   **File:** e.g., `_transports.default.py` or `_transports.base.py`  \n   **Class:** `HTTPTransport` or another `BaseTransport` subclass  \n   **Method:** `handle_request()`  \n   **What it does:**  \n   - Converts the `Request` into an `httpcore.Request`.  \n   - Calls `self._pool.handle_request(req)`.\n\n9. `handle_request()` in `httpcore`'s `ConnectionPool` (called inside `HTTPTransport`):  \n   **File:** (Inside the `httpcore` library, not shown in above snippets but called by `httpcore`)  \n   **Method:** `ConnectionPool.handle_request()`  \n   **What it does:**  \n   - Executes the actual network request/response cycle (via socket I/O) and returns an `httpcore.Response`.\n\n10. Response returned from `httpcore` gets wrapped into a `Response` object in `_transports.default.py`:  \n    **File:** `_transports.default.py`  \n    **Class:** `HTTPTransport`  \n    **Method:** `handle_request()`  \n    **What it does:**  \n    - Wraps the `httpcore.Response` into an `httpx.Response` object and returns.\n\n11. Control returns back to `_send_single_request()` which returns an `httpx.Response` object to `_send_handling_auth()`.  \n    - Then it propagates back up through `send()` and `request()`.\n\n12. `request()` in `_api.py` (Pages 3\u20133) returns the `Response` back to the initial `get()` call.\n\n**Summary of the call chain (most critical for execution flow):**\n\n- File `_api.py`: `get()` \u2192 `request()`\n- File `_api.py`: `request()` \u2192 `client.request()`\n- File `_client.py`: `Client.request()` \u2192 `build_request()` and `send()`\n- `_client.py`: `send()` \u2192 `_build_request_auth()` and `_send_handling_auth()`\n- `_client.py`: `_send_handling_auth()` \u2192 `_send_single_request()`\n- `_transports.default.py`: `HTTPTransport.handle_request()` \u2192 `httpcore`\u2019s `handle_request()`\n\nAll these, in sequence, correspond to the complete call chain when `httpx.get(url)` is invoked, starting from the interface function in `_api.py` and ultimately executing the network request via `_transports.default.py` handling `handle_request()`.",
+      "total_tokens": 67007,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 8.653,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.4157,
+        "symbol_recall": 0.7609
+      },
+      "composite_score": 0.6892,
+      "passed": true
+    },
+    {
+      "question_id": 2,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is the `UseClientDefault` class in httpx, why does it exist, and which parameters use it as their default value in `Client.send()`?",
+      "ground_truth": "`UseClientDefault` is a sentinel class defined in `_client.py`. It exists because for parameters like `auth` and `timeout`, httpx needs to distinguish between two different states: (1) the parameter was not passed (use whatever default the client has configured), and (2) the parameter was explicitly set to `None` (disable that feature). Using `None` for 'not set' would make it impossible to distinguish 'use client default timeout' from 'no timeout'. `USE_CLIENT_DEFAULT` is the singleton instance of this class. In `Client.send()`, both `auth` and `follow_redirects` use `USE_CLIENT_DEFAULT` as their default, meaning if not explicitly passed they fall back to whatever the Client was configured with.",
+      "source_files": [
+        "_client.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The `UseClientDefault` class in `httpx` serves as a sentinel to indicate that a parameter should use the default value configured on the client instance, rather than being explicitly set to `None` or other value. Its existence allows the library to distinguish between \"no override\" (use the client's default setting) and \"explicit disable\" (e.g., `None` to disable a feature).\n\n**Why it exists:**  \nIt provides a way for request methods like `Client.send()` and `build_request()` to differentiate between parameters that the user has not set (so defaults should be used) and those explicitly set to `None` (which might mean disabling or clearing a configuration).\n\n**Parameters in `Client.send()` that use `UseClientDefault` as their default:**\n\n- `auth`\n- `follow_redirects`\n- `timeout`\n\nThese parameters, if not explicitly provided, will default to `USE_CLIENT_DEFAULT`, signaling to use the client's configured default, whereas the user can explicitly set them to `None` or other values to override.\n\n**References from the code:**  \nSee the class definition and the `request()` method in the `Client` class. The `request()` method uses:\n\n```python\ndef request(\n    self,\n    method: str,\n    url: URLTypes,\n    ...,\n    auth: typing.Union[AuthTypes, UseClientDefault, None] = USE_CLIENT_DEFAULT,\n    follow_redirects: typing.Union[bool, UseClientDefault] = USE_CLIENT_DEFAULT,\n    timeout: typing.Union[TimeoutTypes, UseClientDefault] = USE_CLIENT_DEFAULT,\n    ...\n) -> Response:\n```",
+      "total_tokens": 17615,
+      "chunks_accessed": 1,
+      "sub_call_count": 4,
+      "elapsed_seconds": 5.579,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.5446,
+        "symbol_recall": 0.6176
+      },
+      "composite_score": 0.7186,
+      "passed": true
+    },
+    {
+      "question_id": 2,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is the `UseClientDefault` class in httpx, why does it exist, and which parameters use it as their default value in `Client.send()`?",
+      "ground_truth": "`UseClientDefault` is a sentinel class defined in `_client.py`. It exists because for parameters like `auth` and `timeout`, httpx needs to distinguish between two different states: (1) the parameter was not passed (use whatever default the client has configured), and (2) the parameter was explicitly set to `None` (disable that feature). Using `None` for 'not set' would make it impossible to distinguish 'use client default timeout' from 'no timeout'. `USE_CLIENT_DEFAULT` is the singleton instance of this class. In `Client.send()`, both `auth` and `follow_redirects` use `USE_CLIENT_DEFAULT` as their default, meaning if not explicitly passed they fall back to whatever the Client was configured with.",
+      "source_files": [
+        "_client.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "The `UseClientDefault` class in httpx is a helper class that acts as a sentinel value to indicate that a parameter should use the default configuration set on the client, rather than explicitly overriding it with a custom value. It exists so that users can distinguish between \"no specific value provided\" and `None`, enabling parameters to be optionally overridden or left as the client\u2019s default.\n\nSpecifically, `UseClientDefault` is implemented as a class with no attributes or methods, serving solely as a unique marker object.\n\nIn the `Client.send()` method, the parameters that use `UseClientDefault` as their default value are:\n- `stream: bool = False` (note, this is a boolean with a default `False`; it does not default to `UseClientDefault`, but except for this, all others do not use it)\n- `auth: typing.Union[AuthTypes, UseClientDefault, None] = USE_CLIENT_DEFAULT`\n- `follow_redirects: typing.Union[bool, UseClientDefault] = USE_CLIENT_DEFAULT`\n\nThus, in `Client.send()`, the parameters `auth` and `follow_redirects` are explicitly designed to accept the sentinel `USE_CLIENT_DEFAULT`\u2014meaning if the caller does not specify them, the method will rely on the client's default configuration for these parameters.",
+      "total_tokens": 66163,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 3.688,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.59,
+        "symbol_recall": 0.5735
+      },
+      "composite_score": 0.7302,
+      "passed": true
+    },
+    {
+      "question_id": 3,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "In httpx, when is the `Authorization` header automatically stripped from a request during a redirect? Which file and function make this decision, and what is the exact condition?",
+      "ground_truth": "The `Authorization` header is stripped during redirects in `_client.py` in the `_merge_headers()` or redirect-handling logic within `Client._build_redirect_request()`. The exact condition: the Authorization header is removed when the redirect crosses to a different origin (different scheme, host, or port). The helper function `_same_origin(url, other)` in `_client.py` checks whether two URLs share the same scheme, host, and port. If the redirect URL is NOT the same origin, sensitive headers including Authorization are stripped. There is an exception: if the redirect is an HTTPS upgrade (HTTP -> HTTPS on the same host), checked by `_is_https_redirect()` in `_client.py`, the headers are preserved.",
+      "source_files": [
+        "_client.py",
+        "_urls.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The detailed logic for stripping the `Authorization` header during redirect is not visible directly in the snippets retrieved. \n\nHowever, based on the typical implementation of httpx and the particular security practice, the stripping of `Authorization` headers during redirects to a different origin is a common security measure to prevent leaking credentials.\n\nIn the `redirects.py` file, the logic verifies if the redirect is to a different origin (i.e., hostname, scheme, or port change). When that occurs, it clears sensitive headers like `Authorization`. \n\nThe condition is essentially:\n\n> If the redirect target's origin differs from the original request's origin, then remove the `Authorization` header.\n\nThis behavior may be implemented in a function that processes redirects, often called `_prepare_redirected_request` or similar.\n\nWhile I cannot see that function explicitly, the critical condition is the comparison of the original request's URL and the redirect URL, and based on the result, the `Authorization` header is stripped according to best practices.\n\nWould you like me to look for the precise function and line if available?",
+      "total_tokens": 17047,
+      "chunks_accessed": 3,
+      "sub_call_count": 6,
+      "elapsed_seconds": 8.381,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.62,
+        "symbol_recall": 0.4516
+      },
+      "composite_score": 0.7193,
+      "passed": true
+    },
+    {
+      "question_id": 4,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is `DigestAuth` in httpx and how does it work? Specifically, how many HTTP requests does a single `DigestAuth` authenticated call make, and why?",
+      "ground_truth": "`DigestAuth` is defined in `_auth.py` and implements HTTP Digest Authentication. It works as a two-request flow: 1. The first request is sent WITHOUT credentials. The server responds with a 401 status containing a `WWW-Authenticate: Digest` header with a challenge (nonce, realm, qop, etc.). 2. DigestAuth reads the challenge from the response, computes the digest response using MD5 (via `hashlib` imported in `_auth.py`), and builds an `Authorization` header. 3. The second request is sent WITH the computed Authorization header. So a single `DigestAuth` authenticated call makes TWO HTTP requests. The `auth_flow()` generator in `_auth.py` yields the first request, receives the 401 response, then calls `_build_auth_header()` which uses `hashlib.md5()` to compute the digest, then yields the second request with the Authorization header.",
+      "source_files": [
+        "_auth.py",
+        "_models.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "`DigestAuth` in httpx is an authentication class that implements HTTP Digest Authentication as specified by RFC 2617. It works by intercepting the initial request, handling a 401 Unauthorized response that contains a `WWW-Authenticate` header, and then constructing an appropriate `Authorization` header for subsequent requests using challenge-response mechanisms.\n\nA key aspect of `DigestAuth` is how it manages requests: it makes multiple HTTP requests during an authenticated call. Specifically, it generally makes **two requests**:\n1. The **initial request**, which is unauthenticated, to the target server.\n2. The **authenticated request** that contains the `Authorization` header, sent after receiving the 401 challenge and parsing the `WWW-Authenticate` header.\n\nHere's why:\n- The first request is made without authentication to provoke a server response that includes the `WWW-Authenticate: Digest ...` challenge.\n- The server responds with a 401 status and the `WWW-Authenticate` header with challenge details.\n- The client then constructs the digest response based on this challenge and resends the request, this time with the `Authorization` header set accordingly.\n\nThis process results in **two requests** for a typical digest-authenticated call: the initial request to receive the challenge, and the second request with the proper digest response. This is intrinsic to the HTTP Digest Authentication process, which is challenge-response based.\n\nI will now fetch more sections related to the detailed working if they're available to confirm, but based on the parsed code, it's clear that this exchange involves two requests due to the challenge-response mechanism.",
+      "total_tokens": 5963,
+      "chunks_accessed": 1,
+      "sub_call_count": 4,
+      "elapsed_seconds": 5.423,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.6106,
+        "symbol_recall": 0.5417
+      },
+      "composite_score": 0.7331,
+      "passed": true
+    },
+    {
+      "question_id": 4,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is `DigestAuth` in httpx and how does it work? Specifically, how many HTTP requests does a single `DigestAuth` authenticated call make, and why?",
+      "ground_truth": "`DigestAuth` is defined in `_auth.py` and implements HTTP Digest Authentication. It works as a two-request flow: 1. The first request is sent WITHOUT credentials. The server responds with a 401 status containing a `WWW-Authenticate: Digest` header with a challenge (nonce, realm, qop, etc.). 2. DigestAuth reads the challenge from the response, computes the digest response using MD5 (via `hashlib` imported in `_auth.py`), and builds an `Authorization` header. 3. The second request is sent WITH the computed Authorization header. So a single `DigestAuth` authenticated call makes TWO HTTP requests. The `auth_flow()` generator in `_auth.py` yields the first request, receives the 401 response, then calls `_build_auth_header()` which uses `hashlib.md5()` to compute the digest, then yields the second request with the Authorization header.",
+      "source_files": [
+        "_auth.py",
+        "_models.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "In the httpx library, `DigestAuth` (found in the `_auth.py` file, class named `DigestAuth`) implements HTTP Digest Authentication. Its purpose is to respond to server challenges with an appropriate `Authorization` header following the Digest scheme, which involves a handshake and some subsequent computation based on server-issued challenge parameters.\n\nHow `DigestAuth` works:\n\n- When a request is sent with a `DigestAuth` instance, the `.auth_flow()` method (which is a generator) executes. On the first request, if there is a prior challenge (`self._last_challenge`), it adds the `Authorization` header using `_build_auth_header()`. It then yields the request, which is sent.\n- The server responds, typically with a `401 Unauthorized` and a `www-authenticate` header containing a `Digest` challenge.\n- The `.auth_flow()` method then inspects the response:\n  - If the response status code is 401 and it contains a `www-authenticate` header starting with \"digest\", it parses this challenge via `_parse_challenge()`.\n  - It stores this challenge (`self._last_challenge`) and resets its nonce counter (`self._nonce_count = 1`).\n  - It then builds a new `Authorization` header with `_build_auth_header()` based on the challenge and the request details.\n  - It dispatches (yields) this request again with the authorization header set.\n- The server processes this second request, now with the Authorization header. If authentication is successful, the server responds with a 2xx status, and the flow completes.\n\n**Number of requests per authenticated call:**\n\n- The initial request is made without any `Authorization` header (or with an old challenge if retained).\n- When the server responds with a 401 challenge, the client responds with a second request, now including the properly computed `Authorization` header.\n- Therefore, **each authenticated request results in exactly two HTTP requests**: one initial attempt (possibly unauthenticated or with prior challenge data) and one subsequent reply with credentials.\n\n**Why?**\n\n- The first request gets a challenge from the server (`www-authenticate` header indicating digest parameters).\n- The client responds with a properly calculated `Authorization` header in a second request, based on that challenge.\n- This exchange follows the standard HTTP Digest Authentication mechanism, which is designed to prevent plaintext credentials from being sent directly and involves a handshake process.\n\n**Summary:**\n\n- `DigestAuth` in httpx works by first dispatching a request that triggers a server challenge.\n- Upon receiving the challenge, it computes an `Authorization` header using the challenge parameters and request details.\n- It then sends a second request with this header.\n- **Thus, each digest-authenticated request generally makes exactly **two** HTTP requests: one to get the challenge and one with the response credentials.**",
+      "total_tokens": 66481,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 6.224,
+      "error": null,
+      "scores": {
+        "faithfulness": 0.9,
+        "code_qa_accuracy": 0.5839,
+        "symbol_recall": 0.7083
+      },
+      "composite_score": 0.7194,
+      "passed": true
+    },
+    {
+      "question_id": 5,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is the maximum number of redirects httpx follows by default, where is this constant defined, and what exception is raised when the limit is exceeded? Which file defines that exception?",
+      "ground_truth": "The default maximum number of redirects is 20, defined as `DEFAULT_MAX_REDIRECTS = 20` in `_config.py`. This constant is imported into `_client.py` where it is used as the default value for the `max_redirects` parameter when constructing a `Client`. When the redirect limit is exceeded, httpx raises `TooManyRedirects`, which is defined in `_exceptions.py`. `TooManyRedirects` inherits from `RequestError` which inherits from `HTTPError`. It is imported into `_client.py` from `_exceptions.py` and raised in the redirect-handling logic when the count of redirects followed exceeds `self.max_redirects`.",
+      "source_files": [
+        "_config.py",
+        "_client.py",
+        "_exceptions.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The default maximum number of redirects that httpx follows is specified by the constant `DEFAULT_MAX_REDIRECTS`. It is imported from the `_config.py` module. \n\nThe exception raised when the limit of redirects is exceeded is called `TooManyRedirects`. \n\nThis exception is defined in the `_exceptions.py` file, as seen in the exception hierarchy.\n\n**Summary:**\n- Maximum redirects default: `DEFAULT_MAX_REDIRECTS`\n- Constant defined in: `_config.py`\n- Exception raised: `TooManyRedirects`\n- Exception defined in: `_exceptions.py`\n\nWould you like the exact default value for `DEFAULT_MAX_REDIRECTS`?",
+      "total_tokens": 26745,
+      "chunks_accessed": 2,
+      "sub_call_count": 5,
+      "elapsed_seconds": 7.188,
+      "error": null,
+      "scores": {
+        "faithfulness": 0.75,
+        "code_qa_accuracy": 0.5822,
+        "symbol_recall": 0.5385
+      },
+      "composite_score": 0.6322,
+      "passed": true
+    },
+    {
+      "question_id": 5,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is the maximum number of redirects httpx follows by default, where is this constant defined, and what exception is raised when the limit is exceeded? Which file defines that exception?",
+      "ground_truth": "The default maximum number of redirects is 20, defined as `DEFAULT_MAX_REDIRECTS = 20` in `_config.py`. This constant is imported into `_client.py` where it is used as the default value for the `max_redirects` parameter when constructing a `Client`. When the redirect limit is exceeded, httpx raises `TooManyRedirects`, which is defined in `_exceptions.py`. `TooManyRedirects` inherits from `RequestError` which inherits from `HTTPError`. It is imported into `_client.py` from `_exceptions.py` and raised in the redirect-handling logic when the count of redirects followed exceeds `self.max_redirects`.",
+      "source_files": [
+        "_config.py",
+        "_client.py",
+        "_exceptions.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "The maximum number of redirects that httpx follows by default is **20**. This value is defined as the constant `DEFAULT_MAX_REDIRECTS`, which is set to `20` in the `_config` module.\n\nThe exception raised when the redirect limit is exceeded is `TooManyRedirects`. \n\nAccording to the provided source code, the class `TooManyRedirects` is defined in the `_exceptions` module.\n\n**Summary:**\n\n- Default maximum redirects: **20**  \n- Defined in: `_config` file as `DEFAULT_MAX_REDIRECTS`  \n- Exception raised when limit is exceeded: `TooManyRedirects`  \n- `TooManyRedirects` is defined in: `_exceptions` file",
+      "total_tokens": 66044,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 1.839,
+      "error": null,
+      "scores": {
+        "faithfulness": 0.8,
+        "code_qa_accuracy": 0.6233,
+        "symbol_recall": 0.4808
+      },
+      "composite_score": 0.6566,
+      "passed": true
+    },
+    {
+      "question_id": 6,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "How does httpx handle response content decoding? What Content-Encoding values are supported, which file implements the decoders, and how does the `Response` object in `_models.py` use these decoders?",
+      "ground_truth": "Response content decoding is handled by `_decoders.py`. The supported Content-Encoding values are: `identity` (no encoding), `gzip`, `deflate`, `br` (brotli \u2014 optional, requires brotli package), and `zstd` (zstandard \u2014 optional, requires zstandard package). Each decoder is a class implementing `ContentDecoder` with `decode()` and `flush()` methods. The `SUPPORTED_DECODERS` dict in `_decoders.py` maps encoding names to decoder classes. `_client.py` imports `SUPPORTED_DECODERS` from `_decoders.py`. When a response is received, the Content-Encoding header is checked and the appropriate decoder is selected from `SUPPORTED_DECODERS` to decompress the response body. Brotli and zstandard support is optional \u2014 if the packages are not installed, those encodings are not available.",
+      "source_files": [
+        "_decoders.py",
+        "_client.py",
+        "_models.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "HTTPX handles response content decoding through a system of decoders that correspond to the Content-Encoding header values. The core of this system is the `_decoders.py` module, which defines various decoder classes:\n\n- **IdentityDecoder:** Handles unencoded data, simply returning the data as-is.\n- **GZipDecoder:** Handles 'gzip' decoding using zlib with support for gzip compression.\n- **DeflateDecoder:** Handles 'deflate' decoding using zlib, with a fallback for different zlib headers.\n- **BrotliDecoder:** Handles 'brotli' decoding, requiring the brotli package (`brotlipy` or `brotli`).\n\nThere's also a `MultiDecoder` class capable of handling multiple encodings applied sequentially.\n\nSupported Content-Encoding values include `identity`, `gzip`, `deflate`, and `br` (brotli). The support for brotli depends on whether the package `brotli` or `brotlicffi` is installed.\n\nThe decoders are implemented in the `_decoders.py` file, and they are used by the `Response` object in `_models.py` (which I would verify further). The `Response` object manages these decoders to automatically decode the response content based on the `Content-Encoding` header, using instances of these decoder classes to process the raw data received from the server.\n\nWould you like additional details on how exactly `_models.py` integrates these decoders or on the specific decoding process?",
+      "total_tokens": 4866,
+      "chunks_accessed": 1,
+      "sub_call_count": 3,
+      "elapsed_seconds": 4.769,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.5788,
+        "symbol_recall": 0.5303
+      },
+      "composite_score": 0.7165,
+      "passed": true
+    },
+    {
+      "question_id": 6,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "How does httpx handle response content decoding? What Content-Encoding values are supported, which file implements the decoders, and how does the `Response` object in `_models.py` use these decoders?",
+      "ground_truth": "Response content decoding is handled by `_decoders.py`. The supported Content-Encoding values are: `identity` (no encoding), `gzip`, `deflate`, `br` (brotli \u2014 optional, requires brotli package), and `zstd` (zstandard \u2014 optional, requires zstandard package). Each decoder is a class implementing `ContentDecoder` with `decode()` and `flush()` methods. The `SUPPORTED_DECODERS` dict in `_decoders.py` maps encoding names to decoder classes. `_client.py` imports `SUPPORTED_DECODERS` from `_decoders.py`. When a response is received, the Content-Encoding header is checked and the appropriate decoder is selected from `SUPPORTED_DECODERS` to decompress the response body. Brotli and zstandard support is optional \u2014 if the packages are not installed, those encodings are not available.",
+      "source_files": [
+        "_decoders.py",
+        "_client.py",
+        "_models.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "httpx handles response content decoding through content decoders that process the `Content-Encoding` header of the response. The `_decoders.py` module implements the decoders, providing classes such as `IdentityDecoder`, `DeflateDecoder`, `GZipDecoder`, and `BrotliDecoder`, as well as a `MultiDecoder` for multiple encodings. These classes inherit from `ContentDecoder` and implement the `decode()` and `flush()` methods, encapsulating the logic for decompressing data according to specific encoding schemes.\n\nThe supported `Content-Encoding` values, as indicated in `_decoders.py`, include `\"identity\"`, `\"gzip\"`, `\"deflate\"`, and `\"br\"` (brotli). The `SUPPORTED_DECODERS` dictionary maps these encoding names (as strings) to their respective decoder classes. The `\"br\"` decoder is only available if the `brotli` package is installed; otherwise, it is omitted from `SUPPORTED_DECODERS`.\n\nIn the `Response` class within `_models.py`, when accessing the decoded content via the `content` property, the `_get_content_decoder()` method is used to determine the appropriate decoder based on the `Content-Encoding` headers. It retrieves a list of encoding values (`get_list(\"content-encoding\", split_commas=True)`) from the response headers, and then constructs a `ContentDecoder` instance accordingly:\n\n- If no Content-Encoding is specified, an `IdentityDecoder` is used.\n- If one encoding is specified, it uses the corresponding decoder class from `_decoders`.\n- If multiple encodings are specified, it constructs a `MultiDecoder` with the sequence of decoders in reverse order of application.\n\nThe `Response` object applies this decoder instance in its `iter_bytes()`, `iter_raw()`, `iter_text()`, and related methods to decode the raw response data incrementally. When the `content` property is accessed, it ensures that the entire response body has been decoded into bytes, using the appropriate decoder to interpret encodings such as gzip, deflate, or brotli, based on the headers.\n\nIn summary:\n\n- **Content encodings supported:** `\"identity\"`, `\"gzip\"`, `\"deflate\"`, `\"br\"` (conditional on brotli being installed).\n- **Implementation of decoders:** Classes in `_decoders.py`, such as `IdentityDecoder`, `DeflateDecoder`, `GZipDecoder`, `BrotliDecoder`, and `MultiDecoder`.\n- **Usage in `Response`:** The `_get_content_decoder()` method selects the decoder(s) based on `Content-Encoding` headers; the `Response` then uses these decoders during raw byte iteration or property access to provide decoded content transparently.",
+      "total_tokens": 66456,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 8.067,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.5803,
+        "symbol_recall": 0.697
+      },
+      "composite_score": 0.7505,
+      "passed": true
+    },
+    {
+      "question_id": 7,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What does `_is_https_redirect()` do in httpx and where is it defined? What are the exact conditions it checks, and how does it relate to the `_same_origin()` function?",
+      "ground_truth": "`_is_https_redirect()` is a module-level function defined in `_client.py`. It returns True if a redirect URL is an HTTPS upgrade of the original URL. Exact conditions it checks: (1) `url.host == location.host` \u2014 same hostname, (2) `url.scheme == 'http'` \u2014 original was HTTP, (3) `_port_or_default(url) == 80` \u2014 original was on port 80, (4) `location.scheme == 'https'` \u2014 redirect is HTTPS, (5) `_port_or_default(location) == 443` \u2014 redirect is on port 443. All five conditions must be true. Relationship to `_same_origin()`: these two functions serve opposite roles in redirect handling. `_same_origin()` checks if origin is preserved (same scheme + host + port). `_is_https_redirect()` identifies the specific case where the origin changes (HTTP->HTTPS) but it is safe to keep sensitive headers because it is an upgrade on the same host. Both use `_port_or_default()` as a helper.",
+      "source_files": [
+        "_client.py",
+        "_urls.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The function `_is_https_redirect()` in httpx is used to determine whether a given HTTP redirect is an HTTPS redirect. It is defined in the httpx library, specifically within the internal utility module, likely `_utils.py`. \n\nIts primary purpose is to check if the redirect points from an HTTP URL to an HTTPS URL, which is a common security-related check during redirect handling. \n\nThe exact conditions it checks involve comparing the scheme of the original URL and the redirect URL. If the original URL scheme is 'http' and the redirect URL scheme is 'https', then `_is_https_redirect()` returns True, indicating an HTTPS redirect.\n\nThis function is related to `_same_origin()` in that both are used to evaluate redirect conditions, but with different criteria. `_same_origin()` typically checks whether two URLs share the same origin (scheme, host, and port), while `_is_https_redirect()` specifically checks if a redirect is from HTTP to HTTPS, regardless of origin.\n\nDue to the structure of the codebase, `_is_https_redirect()` is likely a helper function that works in conjunction with `_same_origin()` to enforce security policies, such as only allowing redirects to secure URLs or handling redirects differently based on whether they are HTTPS.\n\nWould you like me to fetch the exact implementation of `_is_https_redirect()` to provide more details?",
+      "total_tokens": 24395,
+      "chunks_accessed": 4,
+      "sub_call_count": 7,
+      "elapsed_seconds": 7.983,
+      "error": null,
+      "scores": {
+        "faithfulness": 0.7778,
+        "code_qa_accuracy": 0.4331,
+        "symbol_recall": 0.5352
+      },
+      "composite_score": 0.5742,
+      "passed": false
+    },
+    {
+      "question_id": 7,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What does `_is_https_redirect()` do in httpx and where is it defined? What are the exact conditions it checks, and how does it relate to the `_same_origin()` function?",
+      "ground_truth": "`_is_https_redirect()` is a module-level function defined in `_client.py`. It returns True if a redirect URL is an HTTPS upgrade of the original URL. Exact conditions it checks: (1) `url.host == location.host` \u2014 same hostname, (2) `url.scheme == 'http'` \u2014 original was HTTP, (3) `_port_or_default(url) == 80` \u2014 original was on port 80, (4) `location.scheme == 'https'` \u2014 redirect is HTTPS, (5) `_port_or_default(location) == 443` \u2014 redirect is on port 443. All five conditions must be true. Relationship to `_same_origin()`: these two functions serve opposite roles in redirect handling. `_same_origin()` checks if origin is preserved (same scheme + host + port). `_is_https_redirect()` identifies the specific case where the origin changes (HTTP->HTTPS) but it is safe to keep sensitive headers because it is an upgrade on the same host. Both use `_port_or_default()` as a helper.",
+      "source_files": [
+        "_client.py",
+        "_urls.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "The function `_is_https_redirect()` in `httpx` determines whether a URL redirect from a given original URL to a target URL is an upgrade from HTTP to HTTPS. It is defined in the `_utils` module, specifically on page 24 under `_utils`.\n\nExact conditions it checks are:\n\n1. The host component of the original URL (`url.host`) must be equal to the host component of the target URL (`location.host`). If they are not equal, `_is_https_redirect()` returns `False`.\n\n2. The original URL's scheme must be `\"http\"`.\n\n3. The original URL's port, if specified, must be `80`, which is the default HTTP port.\n\n4. The target URL's scheme must be `\"https\"`.\n\n5. The target URL's port, if specified, must be `443`, the default HTTPS port.\n\nOnly when all these conditions are met does `_is_https_redirect()` return `True`; otherwise, it returns `False`.\n\nThe relation to `_same_origin()` is as follows:\n\n- `_is_https_redirect()` specifically checks whether the redirect is an upgrade from HTTP to HTTPS between two URLs, primarily by comparing their host and scheme, with particular attention to port defaults.\n\n- `_same_origin()` checks whether two URLs share the same origin, meaning they have identical scheme, host, and port (with port normalization). It is also located in `_utils`.\n\n**In summary:**\n\n- `_is_https_redirect()` checks if the redirect is an upgrade from HTTP to HTTPS with the same host and default ports (80 to 443).\n\n- It is defined in `_utils`.\n\n- It explicitly checks if `url.host == location.host` and that the schemes and ports reflect the HTTP-to-HTTPS upgrade pattern.\n\n- It is related to `_same_origin()` in that they both compare components of URLs, but `_is_https_redirect()` adds specific conditions about scheme change and port normalization, whereas `_same_origin()` simply tests for identical origin.",
+      "total_tokens": 66297,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 5.019,
+      "error": null,
+      "scores": {
+        "faithfulness": 0.6667,
+        "code_qa_accuracy": 0.4826,
+        "symbol_recall": 0.6056
+      },
+      "composite_score": 0.5716,
+      "passed": false
+    },
+    {
+      "question_id": 8,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is the httpx exception hierarchy? Starting from the base class, list the complete tree of exceptions and which file defines them all.",
+      "ground_truth": "All exceptions are defined in `_exceptions.py`. The hierarchy is: HTTPError (base) \u251c\u2500\u2500 RequestError \u2502   \u251c\u2500\u2500 TransportError \u2502   \u2502   \u251c\u2500\u2500 TimeoutException \u2502   \u2502   \u2502   \u251c\u2500\u2500 ConnectTimeout \u2502   \u2502   \u2502   \u251c\u2500\u2500 ReadTimeout \u2502   \u2502   \u2502   \u251c\u2500\u2500 WriteTimeout \u2502   \u2502   \u2502   \u2514\u2500\u2500 PoolTimeout \u2502   \u2502   \u251c\u2500\u2500 NetworkError \u2502   \u2502   \u2502   \u251c\u2500\u2500 ConnectError \u2502   \u2502   \u2502   \u251c\u2500\u2500 ReadError \u2502   \u2502   \u2502   \u251c\u2500\u2500 WriteError \u2502   \u2502   \u2502   \u2514\u2500\u2500 CloseError \u2502   \u2502   \u251c\u2500\u2500 ProtocolError \u2502   \u2502   \u2502   \u251c\u2500\u2500 LocalProtocolError \u2502   \u2502   \u2502   \u2514\u2500\u2500 RemoteProtocolError \u2502   \u2502   \u251c\u2500\u2500 ProxyError \u2502   \u2502   \u2514\u2500\u2500 UnsupportedProtocol \u2502   \u251c\u2500\u2500 DecodingError \u2502   \u2514\u2500\u2500 TooManyRedirects \u2514\u2500\u2500 HTTPStatusError Separate from HTTPError: InvalidURL, CookieConflict StreamError \u251c\u2500\u2500 StreamConsumed \u251c\u2500\u2500 StreamClosed \u251c\u2500\u2500 ResponseNotRead \u2514\u2500\u2500 RequestNotRead",
+      "source_files": [
+        "_exceptions.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The exception hierarchy for httpx, starting from the base class, is as follows:\n\n- `HTTPError` (defined in `_exceptions.py`)\n  - `RequestError` (inherits from `HTTPError`)\n    - `TransportError` (inherits from `RequestError`)\n      - `TimeoutException` (inherits from `TransportError`)\n        - `ConnectTimeout`\n        - `ReadTimeout`\n        - `WriteTimeout`\n        - `PoolTimeout`\n      - `NetworkError` (inherits from `TransportError`)\n        - `ReadError`\n        - `WriteError`\n        - `ConnectError`\n        - `CloseError`\n      - `ProtocolError` (inherits from `TransportError`)\n        - `LocalProtocolError`\n        - `RemoteProtocolError`\n      - `ProxyError`\n      - `UnsupportedProtocol`\n    - `DecodingError` (inherits from `RequestError`)\n    - `TooManyRedirects` (inherits from `RequestError`)\n  - `HTTPStatusError`\n  - `InvalidURL`\n  - `CookieConflict`\n  - `StreamError` (inherits from `RuntimeError`)\n    - `StreamConsumed`\n    - `StreamClosed`\n    - `ResponseNotRead`\n    - `RequestNotRead`\n\nAll these exceptions are defined in the `_exceptions.py` file.",
+      "total_tokens": 4958,
+      "chunks_accessed": 1,
+      "sub_call_count": 4,
+      "elapsed_seconds": 4.401,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.6142,
+        "symbol_recall": 0.9756
+      },
+      "composite_score": 0.8215,
+      "passed": true
+    },
+    {
+      "question_id": 8,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is the httpx exception hierarchy? Starting from the base class, list the complete tree of exceptions and which file defines them all.",
+      "ground_truth": "All exceptions are defined in `_exceptions.py`. The hierarchy is: HTTPError (base) \u251c\u2500\u2500 RequestError \u2502   \u251c\u2500\u2500 TransportError \u2502   \u2502   \u251c\u2500\u2500 TimeoutException \u2502   \u2502   \u2502   \u251c\u2500\u2500 ConnectTimeout \u2502   \u2502   \u2502   \u251c\u2500\u2500 ReadTimeout \u2502   \u2502   \u2502   \u251c\u2500\u2500 WriteTimeout \u2502   \u2502   \u2502   \u2514\u2500\u2500 PoolTimeout \u2502   \u2502   \u251c\u2500\u2500 NetworkError \u2502   \u2502   \u2502   \u251c\u2500\u2500 ConnectError \u2502   \u2502   \u2502   \u251c\u2500\u2500 ReadError \u2502   \u2502   \u2502   \u251c\u2500\u2500 WriteError \u2502   \u2502   \u2502   \u2514\u2500\u2500 CloseError \u2502   \u2502   \u251c\u2500\u2500 ProtocolError \u2502   \u2502   \u2502   \u251c\u2500\u2500 LocalProtocolError \u2502   \u2502   \u2502   \u2514\u2500\u2500 RemoteProtocolError \u2502   \u2502   \u251c\u2500\u2500 ProxyError \u2502   \u2502   \u2514\u2500\u2500 UnsupportedProtocol \u2502   \u251c\u2500\u2500 DecodingError \u2502   \u2514\u2500\u2500 TooManyRedirects \u2514\u2500\u2500 HTTPStatusError Separate from HTTPError: InvalidURL, CookieConflict StreamError \u251c\u2500\u2500 StreamConsumed \u251c\u2500\u2500 StreamClosed \u251c\u2500\u2500 ResponseNotRead \u2514\u2500\u2500 RequestNotRead",
+      "source_files": [
+        "_exceptions.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "The complete exception hierarchy in httpx, with the base class and all subclasses, is as follows:\n\n- **HTTPError** (defined in `._exceptions`)  \n  - **RequestError** (inherits from `HTTPError`)  \n    - **TransportError** (inherits from `RequestError`)  \n      - **TimeoutException** (inherits from `TransportError`)  \n        - **ConnectTimeout** (inherits from `TimeoutException`)  \n        - **ReadTimeout** (inherits from `TimeoutException`)  \n        - **WriteTimeout** (inherits from `TimeoutException`)  \n        - **PoolTimeout** (inherits from `TimeoutException`)  \n      - **NetworkError** (inherits from `TransportError`)  \n        - **ConnectError** (inherits from `NetworkError`)  \n        - **ReadError** (inherits from `NetworkError`)  \n        - **WriteError** (inherits from `NetworkError`)  \n        - **CloseError** (inherits from `NetworkError`)  \n      - **ProtocolError** (inherits from `TransportError`)  \n        - **LocalProtocolError** (inherits from `ProtocolError`)  \n        - **RemoteProtocolError** (inherits from `ProtocolError`)  \n      - **ProxyError** (inherits from `TransportError`)  \n      - **UnsupportedProtocol** (inherits from `TransportError`)  \n    - **DecodingError** (inherits from `RequestError`)  \n    - **TooManyRedirects** (inherits from `RequestError`)  \n  - **HTTPStatusError** (inherits from `HTTPError`)  \n\nAll these exceptions are defined in the file named **`_exceptions`** within the source code.",
+      "total_tokens": 66229,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 5.01,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.5157,
+        "symbol_recall": 0.7805
+      },
+      "composite_score": 0.7382,
+      "passed": true
+    },
+    {
+      "question_id": 9,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "How does httpx's `Auth` base class work as a generator protocol? Explain what `auth_flow()` yields, what it receives back, and how `Client` in `_client.py` drives this generator.",
+      "ground_truth": "`Auth` is defined in `_auth.py`. Its `auth_flow()` method is a generator function. The protocol works as follows: 1. The generator yields a `Request` object to dispatch. 2. The caller (Client) sends the request and gets a `Response`. 3. The caller sends the Response back into the generator via `flow.send(response)`. 4. The generator can yield another modified Request (for multi-step auth). 5. When the generator returns (StopIteration), the last response is used. In `_client.py`, `Client._send_with_auth()` drives this generator by calling `auth.sync_auth_flow(request)`. The `sync_auth_flow()` method in `_auth.py` handles the generator protocol: it calls `next(flow)` to get the first request, yields it, receives the response via `yield`, then calls `flow.send(response)` to push the response back. If `requires_request_body=True`, `sync_auth_flow` calls `request.read()` before starting. If `requires_response_body=True`, it calls `response.read()` before sending it back.",
+      "source_files": [
+        "_auth.py",
+        "_client.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The `Auth` base class in httpx works as a generator protocol to perform authentication flows that may involve multiple request-response cycles. Here is a detailed explanation of how it operates:\n\n### `auth_flow()` Method\n\n- **Purpose**: To execute the authentication sequence, potentially involving multiple requests and responses.\n- **Return Type**: A generator (`Generator[Request, Response, None]`)\n- **How it works**:\n  - It yields an initial `Request` object: `yield request`.\n  - The client sends this request and receives back a `Response` object.\n  - The response is propagated back into the generator via `response = yield request`.\n  - The generator can then decide whether to perform additional authenticated requests based on the response.\n  - Repeating this process can happen multiple times, enabling complex authentication flows (e.g., handling 401 challenges, refreshing tokens, etc.).\n\n### What `auth_flow()` Yields and Receives\n\n- **Yields**: The request object to be sent.\n- **Receives**: The response object once the request has been sent.\n\nThis \"yield-response\" exchange allows the `Auth` subclass to dynamically adapt requests based on server responses, for example, to include credentials after a 401 Unauthorized challenge.\n\n### How `Client` in `_client.py` Drives This Generator\n\n1. **Request Dispatch**:\n   - The client calls the `auth_flow()` generator and starts it, obtaining an initial `Request`.\n2. **Sending Request**:\n   - The client sends the request over the network.\n3. **Receiving Response**:\n   - The server response is fed back into the generator via `send()`, which advances it to the next yield.\n4. **Decision Logic**:\n   - The `Auth` class can analyze the response (e.g., check for 401, handle token refresh, etc.) and generate new requests as needed.\n5. **Repeat**:\n   - The generator continues yielding requests and receiving responses until it completes (via `StopIteration`), at which point the last response is returned as the authenticated response.\n\n### Summary\n\n- `auth_flow()` is a generator that orchestrates the authentication dialogue, yielding requests and receiving responses.\n- The client manages this process by sending responses back into the generator.\n- This pattern supports multi-step authentication protocols that require multiple request-response exchanges before authentication is complete.\n\nThis flexible mechanism allows various authentication schemes, including Basic, Digest, or custom methods, to be implemented as generator flows that adapt dynamically based on server responses.\n\nWould you like a detailed look into any specific subclass such as `BasicAuth` or `DigestAuth`?",
+      "total_tokens": 5532,
+      "chunks_accessed": 1,
+      "sub_call_count": 3,
+      "elapsed_seconds": 5.835,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.5951,
+        "symbol_recall": 0.5811
+      },
+      "composite_score": 0.734,
+      "passed": true
+    },
+    {
+      "question_id": 9,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "How does httpx's `Auth` base class work as a generator protocol? Explain what `auth_flow()` yields, what it receives back, and how `Client` in `_client.py` drives this generator.",
+      "ground_truth": "`Auth` is defined in `_auth.py`. Its `auth_flow()` method is a generator function. The protocol works as follows: 1. The generator yields a `Request` object to dispatch. 2. The caller (Client) sends the request and gets a `Response`. 3. The caller sends the Response back into the generator via `flow.send(response)`. 4. The generator can yield another modified Request (for multi-step auth). 5. When the generator returns (StopIteration), the last response is used. In `_client.py`, `Client._send_with_auth()` drives this generator by calling `auth.sync_auth_flow(request)`. The `sync_auth_flow()` method in `_auth.py` handles the generator protocol: it calls `next(flow)` to get the first request, yields it, receives the response via `yield`, then calls `flow.send(response)` to push the response back. If `requires_request_body=True`, `sync_auth_flow` calls `request.read()` before starting. If `requires_response_body=True`, it calls `response.read()` before sending it back.",
+      "source_files": [
+        "_auth.py",
+        "_client.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "In the provided source code, `httpx`'s `Auth` class functions as a generator protocol by defining the method `auth_flow()` as a generator function. \n\n**How `auth_flow()` works:**\n\n- It is designed to execute an authentication flow, and within it, it *yields* an `Request` object.  \n- The `yield request` statement dispatches this request to the `Client`.  \n- When the `Client` sends the request over the network, it receives a `Response` object as the return value back into the generator, i.e., it \"sends back\" the response that it obtained from the server.\n\n**What `auth_flow()` yields and receives:**\n\n- `auth_flow()` *yields* a `Request` object, which the `Client` then takes and actually sends over the network.  \n- After the request is sent, the `Client` obtains a `Response` object, which it *sends* into the generator via `send()`, effectively passing the server's response back into `auth_flow()`.\n\n**How `Client` drives this generator:**\n\n- In `_client.py`, the `Client` calls `auth.sync_auth_flow(request)` (or `async_auth_flow()` for asynchronous clients), which returns a generator object.  \n- It then advances the generator by calling `next()`, obtaining the initial `Request`, which it sends via the transport layer.  \n- When the response is received, it \"sends\" the `Response` object back into the generator using `send()`, allowing `auth` to process the server's response and decide whether to generate a new request (for example, upon an authentication challenge) or to terminate.  \n- This process continues: dispatching requests and passing responses back into `auth_flow()`, until the flow terminates (via `StopIteration`) indicating that authentication is complete.\n\n**Summary:**\n\n- `auth_flow()` is a generator that *yields* `Request` objects to be sent.  \n- The `Client` drives this by calling `next()` to get the request and then `send(response)` to pass the server response back into it.  \n- This exchange continues until `auth_flow()` finishes, enabling seamless, stepwise authentication sequences driven by server challenges or multiple request-response exchanges.\n\nThis procedure enables custom authentication schemes to implement multi-step flows where requests are dispatched and responses evaluated iteratively, all managed through this generator protocol.",
+      "total_tokens": 66406,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 6.346,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.4762,
+        "symbol_recall": 0.6622
+      },
+      "composite_score": 0.6967,
+      "passed": true
+    },
+    {
+      "question_id": 10,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is `NetRCAuth` in httpx, where is it defined, and what external Python standard library module does it depend on to find credentials?",
+      "ground_truth": "`NetRCAuth` is defined in `_auth.py`. It is an authentication class that reads credentials from a `.netrc` file. It depends on the Python standard library `netrc` module (specifically `netrc.netrc()`). When `auth_flow()` is called, NetRCAuth reads the .netrc file for the host of the request URL and extracts the login and password. If credentials are found, it creates a `BasicAuth` instance with those credentials and delegates to its auth flow. The .netrc file path defaults to the standard location (~/.netrc on Unix).",
+      "source_files": [
+        "_auth.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "`NetRCAuth` in httpx is an authentication class that uses a `netrc` file to lookup basic authentication credentials based on the URL host. It is defined in the `_auth.py` module. \n\nThis class depends on the external Python standard library module `netrc` to find credentials from the `netrc` file. The `netrc` module is used to load and parse the `.netrc` file to retrieve the authentication information.\n\n**Summary:**\n- **Definition:** `NetRCAuth` is an authentication class for using credentials from a netrc file (defined in `_auth.py`).\n- **Location:** `_auth.py` module.\n- **Dependency:** Standard library module `netrc`.",
+      "total_tokens": 5779,
+      "chunks_accessed": 1,
+      "sub_call_count": 4,
+      "elapsed_seconds": 4.605,
+      "error": null,
+      "scores": {
+        "faithfulness": 0.75,
+        "code_qa_accuracy": 0.5709,
+        "symbol_recall": 0.5179
+      },
+      "composite_score": 0.623,
+      "passed": true
+    },
+    {
+      "question_id": 10,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is `NetRCAuth` in httpx, where is it defined, and what external Python standard library module does it depend on to find credentials?",
+      "ground_truth": "`NetRCAuth` is defined in `_auth.py`. It is an authentication class that reads credentials from a `.netrc` file. It depends on the Python standard library `netrc` module (specifically `netrc.netrc()`). When `auth_flow()` is called, NetRCAuth reads the .netrc file for the host of the request URL and extracts the login and password. If credentials are found, it creates a `BasicAuth` instance with those credentials and delegates to its auth flow. The .netrc file path defaults to the standard location (~/.netrc on Unix).",
+      "source_files": [
+        "_auth.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "`NetRCAuth` in httpx is an authentication class that allows using a 'netrc' file to lookup basic authentication credentials based on the URL host. It is defined in the file `_auth` (specifically in the class `NetRCAuth` at \"Pages 4\u20134\" of the `_auth` section). \n\nThe class `_NetRCAuth` depends on the external Python standard library module `netrc` to find credentials, as evidenced by the import statement `import netrc` in the `_auth` file and the use of `netrc.netrc(file)` to load netrc information in its constructor.",
+      "total_tokens": 66022,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 10.237,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.6,
+        "symbol_recall": 0.5179
+      },
+      "composite_score": 0.7236,
+      "passed": true
+    },
+    {
+      "question_id": 11,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "In httpx, what is the `Limits` class and what three connection pool parameters does it control? Where is `Limits` defined and where is it used when creating the default transport?",
+      "ground_truth": "`Limits` is defined in `_config.py`. It controls three connection pool parameters: (1) `max_connections` \u2014 maximum number of allowable connections, (2) `max_keepalive_connections` \u2014 maximum number of connections to keep alive in the pool, (3) `keepalive_expiry` \u2014 time limit (in seconds) on idle keepalive connections. `DEFAULT_LIMITS` is also defined in `_config.py` with sensible defaults. The `Limits` object is passed to `HTTPTransport` in `_transports/default.py` when constructing the default transport for a `Client`. In `_client.py`, when a `Client` is created without an explicit transport, it creates an `HTTPTransport` using the configured `Limits` object.",
+      "source_files": [
+        "_config.py",
+        "_client.py",
+        "_transports/default.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The `Limits` class in `httpx` controls three connection pool parameters: \n\n1. `max_connections` \u2013 limits the maximum number of concurrent connections.\n2. `max_keepalive_connections` \u2013 limits the maximum number of idle (keep-alive) connections.\n3. `keepalive_expiry` \u2013 sets the duration for which keep-alive connections are kept alive.\n\nThe `Limits` class is defined in the `_config.py` file of the `httpx` library. When creating the default transport, it is used in the `HTTPTransport` and `AsyncHTTPTransport` classes, which are found in `_transports/default.py`. It is passed as the `limits` argument with a default value of `DEFAULT_LIMITS` to both transport classes, and its attributes are used to configure connection pools.\n\n_Source: Section 17 (`_transports/default.py`), lines discussing `Limits` usage and parameters._",
+      "total_tokens": 5819,
+      "chunks_accessed": 1,
+      "sub_call_count": 4,
+      "elapsed_seconds": 3.789,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.7325,
+        "symbol_recall": 0.614
+      },
+      "composite_score": 0.8024,
+      "passed": true
+    },
+    {
+      "question_id": 11,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "In httpx, what is the `Limits` class and what three connection pool parameters does it control? Where is `Limits` defined and where is it used when creating the default transport?",
+      "ground_truth": "`Limits` is defined in `_config.py`. It controls three connection pool parameters: (1) `max_connections` \u2014 maximum number of allowable connections, (2) `max_keepalive_connections` \u2014 maximum number of connections to keep alive in the pool, (3) `keepalive_expiry` \u2014 time limit (in seconds) on idle keepalive connections. `DEFAULT_LIMITS` is also defined in `_config.py` with sensible defaults. The `Limits` object is passed to `HTTPTransport` in `_transports/default.py` when constructing the default transport for a `Client`. In `_client.py`, when a `Client` is created without an explicit transport, it creates an `HTTPTransport` using the configured `Limits` object.",
+      "source_files": [
+        "_config.py",
+        "_client.py",
+        "_transports/default.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "In the httpx library, the `Limits` class is a configuration data structure that manages constraints related to client behavior, specifically for connection pooling. It is defined in the file `_config` (Pages 7\u20137). The class includes parameters for limiting certain aspects of the connection pool\u2019s operation and is used to control resource usage.\n\nThe three connection pool parameters that `Limits` controls are:\n1. **max_connections** \u2013 The maximum number of concurrent connections that may be established.\n2. **max_keepalive_connections** \u2013 The number of keep-alive connections the connection pool can maintain simultaneously.\n3. **keepalive_expiry** \u2013 The time limit (in seconds) on idle keep-alive connections before they are closed.\n\nWhen creating the default transport in `_transports.default` (Pages 18\u201318), the `Limits` class is used via a default instance named `DEFAULT_LIMITS`. This default instance is passed to the `HTTPTransport` or `AsyncHTTPTransport` constructors to configure the connection pool limits for the transport.",
+      "total_tokens": 66111,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 21.701,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.4596,
+        "symbol_recall": 0.6491
+      },
+      "composite_score": 0.6866,
+      "passed": true
+    },
+    {
+      "question_id": 12,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What happens in httpx when you call `response.raise_for_status()`? Which file defines this method, what exception does it raise, and what information does the exception carry?",
+      "ground_truth": "`raise_for_status()` is defined on the `Response` class in `_models.py`. If the response status code indicates an error (4xx or 5xx), it raises `HTTPStatusError` which is defined in `_exceptions.py`. `HTTPStatusError` carries three pieces of information: (1) a message string describing the error, (2) the `request` that was sent (the Request object), (3) the `response` that was received (the Response object). If the status code is 2xx or 3xx, `raise_for_status()` does nothing and returns the Response object (allowing method chaining). `HTTPStatusError` inherits from `HTTPError` (not from `RequestError`). The `_models.py` file imports `HTTPStatusError` from `_exceptions.py`.",
+      "source_files": [
+        "_models.py",
+        "_exceptions.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The `raise_for_status()` method is typically part of the `Response` class in httpx. From the module, it would be a method that checks the response status code. When called, if the status code indicates an error (such as 4xx or 5xx), it raises an `HTTPStatusError`.\n\nThe `HTTPStatusError` class is defined in the `_exceptions.py` file. It inherits from `HTTPError`, which, in turn, inherits from the base `Exception`. This exception carries the request object and the response object that caused the error, providing context for debugging.\n\nIn summary:\n- `response.raise_for_status()` raises `HTTPStatusError` if the response status code is 4xx or 5xx.\n- The `_exceptions.py` file defines `HTTPStatusError`.\n- The exception contains attributes `request` and `response`.\n- The `request` attribute is the original request, and the `response` attribute includes details such as the status code, headers, and content.\n\nThis behavior aligns with the common pattern for HTTP client libraries, enabling users to handle HTTP errors cleanly.\n\nWould you like a sample implementation of how `raise_for_status()` is implemented?",
+      "total_tokens": 16375,
+      "chunks_accessed": 3,
+      "sub_call_count": 5,
+      "elapsed_seconds": 8.703,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.5077,
+        "symbol_recall": 0.6182
+      },
+      "composite_score": 0.7021,
+      "passed": true
+    },
+    {
+      "question_id": 12,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What happens in httpx when you call `response.raise_for_status()`? Which file defines this method, what exception does it raise, and what information does the exception carry?",
+      "ground_truth": "`raise_for_status()` is defined on the `Response` class in `_models.py`. If the response status code indicates an error (4xx or 5xx), it raises `HTTPStatusError` which is defined in `_exceptions.py`. `HTTPStatusError` carries three pieces of information: (1) a message string describing the error, (2) the `request` that was sent (the Request object), (3) the `response` that was received (the Response object). If the status code is 2xx or 3xx, `raise_for_status()` does nothing and returns the Response object (allowing method chaining). `HTTPStatusError` inherits from `HTTPError` (not from `RequestError`). The `_models.py` file imports `HTTPStatusError` from `_exceptions.py`.",
+      "source_files": [
+        "_models.py",
+        "_exceptions.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "When you call `response.raise_for_status()` in httpx, the method checks the HTTP status code of the response to determine if it indicates an error (such as 4xx or 5xx status). \n\nThis method is defined in the `Response` class, which is located in the `_models` module (specifically in the file `._models`, pages 12\u201312). \n\nThe `raise_for_status()` method raises an `HTTPStatusError` exception if the response indicates an error (i.e., the status code is not successful). The exception carries the following information:\n- The error message, which includes the status code, reason phrase, and URL.\n- The associated `request` object.\n- The `response` object itself.\n\nIn more detail, the exception raised is `HTTPStatusError` (defined in the `_exceptions` module, pages 10\u201310). The exception contains:\n- `request`: the `Request` instance associated with the response, accessible via the `request` property.\n- `response`: the `Response` instance that triggered the error, accessible via the `response` property.\n\nThus, `response.raise_for_status()` raises `HTTPStatusError` with detailed info about the HTTP status error, the request, and the response.",
+      "total_tokens": 66156,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 14.334,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.6,
+        "symbol_recall": 0.6182
+      },
+      "composite_score": 0.7436,
+      "passed": true
+    },
+    {
+      "question_id": 13,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "How does httpx build a `Request` object from parameters like `url`, `params`, `headers`, and `json`? Trace through `Client.build_request()` in `_client.py` and identify which `_models.py` class methods are called.",
+      "ground_truth": "`Client.build_request()` in `_client.py` constructs a `Request` object from the `_models.py` module. The process: 1. The URL is merged with base_url if set, processed through the `URL` class from `_urls.py`. 2. Query params are merged using `QueryParams` from `_urls.py`. 3. Headers are merged \u2014 client headers + per-request headers \u2014 using `Headers` from `_models.py`. 4. Cookies are merged using `Cookies` from `_models.py`. 5. Content is determined: if `json=` is passed, it is serialized and the Content-Type is set to `application/json`. If `data=` is passed, form encoding is applied. If `files=` is passed, multipart is used. 6. A `Request` object from `_models.py` is constructed with all merged parameters and returned.",
+      "source_files": [
+        "_client.py",
+        "_models.py",
+        "_urls.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The `httpx.Client.build_request()` method constructs a `Request` object by processing provided parameters `url`, `params`, `headers`, and `json`, among others. It merges these parameters with client defaults and internal logic to prepare the final `Request`.\n\nThe key steps in `build_request()` are:\n\n1. Calls `self._merge_url()` to combine the `url` parameter with the client's `base_url`.\n2. Calls `_merge_headers()` to combine or override client headers with those passed to `build_request`.\n3. Calls `_merge_cookies()` to merge client cookies with any passed cookies.\n4. Calls `_merge_queryparams()` to combine client query parameters with those passed at request time.\n5. Sets up `extensions`, including `timeout`.\n6. Creates and returns a `Request` instance with all combined parameters.\n\nThe creation of `Request` internally calls its constructor, which can generate the request stream through `encode_request()`. The method `encode_request()` is imported from `_content.py` and is responsible for encoding the request body content based on `content`, `data`, `files`, and `json`.\n\nIn particular, when `json` parameter is provided:\n\n- `encode_request()` detects it and encodes it into request content with appropriate headers. \n\nWithin `encode_request()`, the following logic (from `_content.py`) is called:\n\n- `encode_request()` creates headers and a stream from the attached content.\n- For `json=...` input, it calls `encode_response()` with `json` parameter, which serializes the content and sets content-type to application/json.\n\nIn `_models.py`, the key classes and method that are called during `build_request()` are:\n\n- The `Request` class constructor (`Request(...)`) which constructs the request object.\n- The `Headers` class constructor, which processes headers.\n- The `Cookies` class constructor, which processes cookies.\n- The URL resolution via `URL` class for `url` parameter.\n\nThe encoding of the body, especially for `json`, is done via `encode_response()`, which utilizes classes such as `ContentDecoder`, `IdentityDecoder`, etc., but the pivotal class for JSON encoding is `encode_response()` in `_content.py`.\n\n**Summary:**  \n`Client.build_request()` merges parameters, encodes the body (including JSON via `encode_response()`), and constructs a `Request` object. The key classes called from `_models.py` within this process are `Request`, `Headers`, and `Cookies`, with body encoding involving functions from `_content.py` (`encode_request()` and `encode_response()`).\n\nWould you like me to trace the precise point in `_content.py` where JSON encoding occurs?",
+      "total_tokens": 42181,
+      "chunks_accessed": 2,
+      "sub_call_count": 5,
+      "elapsed_seconds": 8.698,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.5732,
+        "symbol_recall": 0.6167
+      },
+      "composite_score": 0.7313,
+      "passed": true
+    },
+    {
+      "question_id": 13,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "How does httpx build a `Request` object from parameters like `url`, `params`, `headers`, and `json`? Trace through `Client.build_request()` in `_client.py` and identify which `_models.py` class methods are called.",
+      "ground_truth": "`Client.build_request()` in `_client.py` constructs a `Request` object from the `_models.py` module. The process: 1. The URL is merged with base_url if set, processed through the `URL` class from `_urls.py`. 2. Query params are merged using `QueryParams` from `_urls.py`. 3. Headers are merged \u2014 client headers + per-request headers \u2014 using `Headers` from `_models.py`. 4. Cookies are merged using `Cookies` from `_models.py`. 5. Content is determined: if `json=` is passed, it is serialized and the Content-Type is set to `application/json`. If `data=` is passed, form encoding is applied. If `files=` is passed, multipart is used. 6. A `Request` object from `_models.py` is constructed with all merged parameters and returned.",
+      "source_files": [
+        "_client.py",
+        "_models.py",
+        "_urls.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "The process for building a `Request` object from parameters like `url`, `params`, `headers`, and `json` in `httpx` involves calling the `build_request()` method on a `Client` instance, which is defined in `_client.py`. \n\nWithin `Client.build_request()`, the following steps occur:\n\n1. **Merging URL with Base URL:**\n   The method calls `self._merge_url(url)` (defined in `_client.py`) to resolve the final URL. This involves constructing a `URL` object (from `_urls.py`) and possibly joining with a base URL if the provided `url` is relative.\n\n2. **Merging Headers and Cookies:**\n   It calls `self._merge_headers(headers)` and `self._merge_cookies(cookies)` to produce final headers and cookies, which rely on the `Headers` and `Cookies` classes, respectively, from `_models.py`.\n\n3. **Handling Query Parameters:**\n   It calls `self._merge_queryparams(params)` to produce the final query parameters, which creates a `QueryParams` object from `_urls.py` and `_types.py`.\n\n4. **Assembling `Request` Instance:**\n   The method finally constructs a `Request` object from `_models.py` by passing in:\n   - `method` (the HTTP method),\n   - `url` (the merged URL object),\n   - `headers` (from `_models.py`),\n   - `cookies` (from `_models.py`),\n   - `extensions`, and\n   - `content`, `data`, `files`, `json`, `params`, `headers`, `cookies`, etc.\n\n   To populate the request body, it calls the function `encode_request()` from `_content.py`, passing the parameters `content`, `data`, `files`, `json`, and `boundary`. This function determines how to produce the headers and the body stream, possibly invoking methods like:\n\n   - `encode_content()` for raw content or data (from `_content.py`),\n   - `encode_urlencoded_data()` when data is form-encoded,\n   - `encode_json()` for JSON payloads,\n   - `encode_multipart_data()` for files, etc.\n\n5. **Creating the `Request` Object:**\n   The `Request` constructor from `_models.py` is invoked with all the assembled components (method, URL, headers, body, etc.). \n\nIn summary, the `build_request()` method in `_client.py` uses the following class methods from `_models.py`:\n\n- The `Request` class constructor (`Request(...)`) is called at the end of `build_request()` to create the `Request` object.\n- Before that, the `Headers` object is prepared via `Headers.update()` and other methods.\n- The URL is constructed and merged using the `URL` class from `_urls.py`.\n- The query parameters are managed using the `QueryParams` class from `_urls.py` and `_types.py`.\n- Cookies are handled with the `Cookies` class from `_models.py`.\n- The request body/stream is produced via functions like `encode_request()`, which internally call class methods such as `encode_content()`, `encode_json()`, etc., from `_content.py`.\n\n**Thus,** the `Request` object is constructed with data supplied by the `Request` class constructor in `_models.py`, which is called at the end of `build_request()` to represent the fully assembled request ready for dispatch.",
+      "total_tokens": 66625,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 27.136,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.5126,
+        "symbol_recall": 0.6667
+      },
+      "composite_score": 0.714,
+      "passed": true
+    },
+    {
+      "question_id": 14,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is `CookieConflict` in httpx and when is it raised? Which file defines it and which file raises it?",
+      "ground_truth": "`CookieConflict` is defined in `_exceptions.py`. It is raised when trying to access a cookie by name but multiple cookies with that name exist (e.g., from different domains or paths), making it ambiguous which cookie is meant. `CookieConflict` is raised in `_models.py` in the `Cookies` class \u2014 specifically in `Cookies.__getitem__()` and `Cookies.get()` when more than one cookie matches the requested name. `CookieConflict` does NOT inherit from `HTTPError` or `RequestError` \u2014 it is a standalone exception class that inherits directly from the base `Exception`.",
+      "source_files": [
+        "_exceptions.py",
+        "_models.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "`CookieConflict` in httpx is an exception class used to indicate that an attempt was made to look up a cookie by name, but multiple cookies with that name existed, creating a conflict.\n\nIt is raised when calling `response.cookies.get(...)` in a situation where multiple cookies share the same name. This indicates that the cookie lookup cannot be unambiguous due to the existence of multiple cookies with the same name.\n\nThis class is defined in the `_exceptions.py` file, as shown in the documentation extract.\n\nThe file that raises `CookieConflict` is not explicitly shown in the provided excerpts, but typically, exceptions like `CookieConflict` are raised in the context of cookie handling logic within response processing or cookie parsing code. Since this is a standard exception, it is most likely raised during operations that involve cookie lookup or management, possibly within the response handling code or cookie management code in the httpx library.\n\nTo summarize:\n- **What is `CookieConflict`?**  \n  An exception indicating multiple cookies with the same name exist, causing a conflict during lookup.\n\n- **When is it raised?**  \n  It is raised when attempting to get a cookie by name and multiple cookies with that name are present.\n\n- **Which file defines it?**  \n  `_exceptions.py`\n\n- **Which file raises it?**  \n  The specific raising code isn't provided, but it would logically be in parts of httpx that handle cookie retrieval, likely within response cookie management code, also within `_exceptions.py` or related modules.\n\nIf you need detailed code points where it is raised, accessing the cookie management implementations in the relevant response or cookie handling modules would be necessary.",
+      "total_tokens": 5020,
+      "chunks_accessed": 1,
+      "sub_call_count": 4,
+      "elapsed_seconds": 7.47,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.4585,
+        "symbol_recall": 0.4655
+      },
+      "composite_score": 0.6494,
+      "passed": true
+    },
+    {
+      "question_id": 14,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is `CookieConflict` in httpx and when is it raised? Which file defines it and which file raises it?",
+      "ground_truth": "`CookieConflict` is defined in `_exceptions.py`. It is raised when trying to access a cookie by name but multiple cookies with that name exist (e.g., from different domains or paths), making it ambiguous which cookie is meant. `CookieConflict` is raised in `_models.py` in the `Cookies` class \u2014 specifically in `Cookies.__getitem__()` and `Cookies.get()` when more than one cookie matches the requested name. `CookieConflict` does NOT inherit from `HTTPError` or `RequestError` \u2014 it is a standalone exception class that inherits directly from the base `Exception`.",
+      "source_files": [
+        "_exceptions.py",
+        "_models.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "`CookieConflict` in `httpx` is an exception class used to indicate that multiple cookies with the same name exist, which causes ambiguity when trying to retrieve a cookie by name. It is intended to be raised when a cookie lookup by name results in more than one matching cookie, making it unclear which cookie should be returned.\n\nAccording to the provided source code, `CookieConflict` is defined in the file `_exceptions.py` (on pages 10\u201310) as a subclass of `Exception` with an initializer that sets the message.\n\nThe only mention of raising `CookieConflict` in the document appears in the `Cookies` class inside `_models.py` (pages 12\u201312). Specifically, in the method `get()` of the `Cookies` class, if multiple cookies with the same name are found during a lookup, a `CookieConflict` is raised with a message indicating that multiple cookies exist with that name.\n\nSo:\n\n- **Definition file:** `_exceptions.py`\n- **File raising it:** `_models.py` within the `Cookies.get()` method, when multiple cookies with the same name are encountered and a cookie is requested.",
+      "total_tokens": 66119,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 9.111,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.5803,
+        "symbol_recall": 0.6034
+      },
+      "composite_score": 0.7318,
+      "passed": true
+    },
+    {
+      "question_id": 15,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "In httpx, what is the `Proxy` class, where is it defined, and what are the three URL schemes it supports? How does `Client` in `_client.py` use `Proxy` objects when routing requests?",
+      "ground_truth": "`Proxy` is defined in `_config.py`. It represents a proxy configuration with a URL and optional headers and authentication. The three URL schemes supported are `http://`, `https://`, and `socks5://`. In `_client.py`, when a `Client` is constructed with a `proxy` parameter (or proxies dict), it creates `Proxy` objects and stores them. When routing a request, `Client._transport_for_url()` checks the request URL against the configured proxy patterns using `URLPattern` from `_utils.py` to select the appropriate transport (proxied or direct). Different proxy URLs can be configured for different URL patterns.",
+      "source_files": [
+        "_config.py",
+        "_client.py",
+        "_utils.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The `Proxy` class in `httpx` is defined in the `_config.py` file. It supports three URL schemes: \"http://\", \"https://\", and \"all://\".\n\nRegarding how `Client` in `_client.py` uses `Proxy` objects when routing requests: \n\n- The method `_get_proxy_map()` processes the `proxies` parameter and creates a mapping where URLs are associated with `Proxy` instances.\n- When a request is made, `_transport_for_url()` determines the appropriate transport to handle the request by matching the request URL against the patterns in the `_mounts` dictionary.\n- If a `Proxy` object is associated with the pattern that matches the request URL, the client uses the transport initialized with that `Proxy` to route the request through the proxy.\n\nThis way, `Proxy` objects are integrated into request routing by associating them with URL schemes and matching them during request dispatch to use appropriate transport configurations.\n\nCitations:\n- The `Proxy` class location is indicated under the `_config.py` file in the TOC.\n- URL schemes supported by `Proxy`: `\"http://\"`, `\"https://\"`, and `\"all://\"` (from the `_client.py` code snippet in `_get_proxy_map()` using the `Proxy` constructor).\n- Usage in `Client` involves methods `_get_proxy_map()`, `_transport_for_url()`, and `_init_proxy_transport()` to route requests via proxies.\n\nWould you like a more detailed explanation or specific code snippets?",
+      "total_tokens": 17623,
+      "chunks_accessed": 1,
+      "sub_call_count": 4,
+      "elapsed_seconds": 5.33,
+      "error": null,
+      "scores": {
+        "faithfulness": 0.6,
+        "code_qa_accuracy": 0.5197,
+        "symbol_recall": 0.6406
+      },
+      "composite_score": 0.572,
+      "passed": false
+    },
+    {
+      "question_id": 15,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "In httpx, what is the `Proxy` class, where is it defined, and what are the three URL schemes it supports? How does `Client` in `_client.py` use `Proxy` objects when routing requests?",
+      "ground_truth": "`Proxy` is defined in `_config.py`. It represents a proxy configuration with a URL and optional headers and authentication. The three URL schemes supported are `http://`, `https://`, and `socks5://`. In `_client.py`, when a `Client` is constructed with a `proxy` parameter (or proxies dict), it creates `Proxy` objects and stores them. When routing a request, `Client._transport_for_url()` checks the request URL against the configured proxy patterns using `URLPattern` from `_utils.py` to select the appropriate transport (proxied or direct). Different proxy URLs can be configured for different URL patterns.",
+      "source_files": [
+        "_config.py",
+        "_client.py",
+        "_utils.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "The `Proxy` class in httpx is a class designed to represent proxy configuration, encapsulating the proxy URL and optional authentication headers. It is defined in the `_config.py` file, specifically on the section titled \"Section: _config (Pages 7\u20137)\".\n\nSupport for URL schemes: The `Proxy` class supports three URL schemes:\n- `\"http\"` \n- `\"https\"` \n- `\"socks5\"` \n\nas indicated in its `__init__` method, where there is a check:\n```python\nif url.scheme not in (\"http\", \"https\", \"socks5\"):\n    raise ValueError(f\"Unknown scheme for proxy URL {url!r}\")\n```\n\nUsage in `_client.py`:\nWhen a `Client` instance is initialized with a `proxies` parameter, it calls `_get_proxy_map()` to convert the provided proxies into a dictionary mapping proxy keys to `Proxy` objects. \n\nWithin this process (`_get_proxy_map()`), each entry in the proxies input:\n- Is converted into a `Proxy` instance if it is a string or URL.\n- This `Proxy` object is then stored in the proxy map.\n\nLater, during request handling (`_transport_for_url()` method of `Client`), the client:\n- Iterates through the sorted `self._mounts` which are URL patterns mapped to transports.\n- Checks if the pattern matches the request URL.\n- If a pattern matches and the associated transport is a proxy (not `None`), the request is routed through that `Proxy` object, meaning the `Proxy` influences how the request is sent (e.g., via a SOCKS or HTTP proxy).\n\nIn summary:\n- The `Proxy` class is defined in `_config.py`.\n- It supports `\"http\"`, `\"https\"`, and `\"socks5\"` URL schemes.\n- `Client`, in `_client.py`, uses `Proxy` objects by creating a proxy map during initialization and selecting the appropriate `Proxy` instance when the URL matches specific proxy patterns, thus routing requests through the configured proxies.",
+      "total_tokens": 66330,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 22.616,
+      "error": null,
+      "scores": {
+        "faithfulness": 0.7778,
+        "code_qa_accuracy": 0.5354,
+        "symbol_recall": 0.6719
+      },
+      "composite_score": 0.6475,
+      "passed": true
+    },
+    {
+      "question_id": 16,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What does `Response.stream()` do in httpx versus `Response.read()`? Which file defines these methods, and what exception is raised if you try to read a response that has already been consumed?",
+      "ground_truth": "Both methods are defined on the `Response` class in `_models.py`. `Response.read()` fully reads and buffers the response body into memory, returning bytes. After calling `read()`, the content is available as `response.content`. `Response.stream()` (or the streaming context) does NOT load the full body into memory \u2014 it provides an iterator/generator for the response bytes chunk by chunk, suitable for large downloads. If you try to read a response body that has already been streamed and closed, httpx raises `StreamConsumed` (if the stream was already iterated) or `StreamClosed` (if the stream was already closed). Both `StreamConsumed` and `StreamClosed` are defined in `_exceptions.py` and both inherit from `StreamError`. Similarly, `ResponseNotRead` is raised if you try to access `response.content` before calling `read()` on a streaming response.",
+      "source_files": [
+        "_models.py",
+        "_exceptions.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The methods `Response.stream()` and `Response.read()` are both defined in the `_content.py` file within the `httpx` library. \n\n- `Response.stream()` is used to asynchronously produce the response content as a stream, allowing for handling large responses or streaming data efficiently.\n- `Response.read()` is used to read the entire response content at once.\n\nIf you try to read a response that has already been consumed, the `_exceptions.py` file indicates that an exception is raised. Specifically, `Response.content` and similar methods raise an `ResponseNotRead()` exception if the response has already been read or consumed.\n\n**Summary:**\n- `Response.stream()` and `Response.read()` are defined in `_content.py`.\n- An exception called `ResponseNotRead` (defined in `_exceptions.py`) is raised if you attempt to read from a response that has already been consumed.\n\nWould you like the exact class or function signatures?",
+      "total_tokens": 49148,
+      "chunks_accessed": 2,
+      "sub_call_count": 5,
+      "elapsed_seconds": 9.008,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.3272,
+        "symbol_recall": 0.48
+      },
+      "composite_score": 0.5932,
+      "passed": false
+    },
+    {
+      "question_id": 16,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What does `Response.stream()` do in httpx versus `Response.read()`? Which file defines these methods, and what exception is raised if you try to read a response that has already been consumed?",
+      "ground_truth": "Both methods are defined on the `Response` class in `_models.py`. `Response.read()` fully reads and buffers the response body into memory, returning bytes. After calling `read()`, the content is available as `response.content`. `Response.stream()` (or the streaming context) does NOT load the full body into memory \u2014 it provides an iterator/generator for the response bytes chunk by chunk, suitable for large downloads. If you try to read a response body that has already been streamed and closed, httpx raises `StreamConsumed` (if the stream was already iterated) or `StreamClosed` (if the stream was already closed). Both `StreamConsumed` and `StreamClosed` are defined in `_exceptions.py` and both inherit from `StreamError`. Similarly, `ResponseNotRead` is raised if you try to access `response.content` before calling `read()` on a streaming response.",
+      "source_files": [
+        "_models.py",
+        "_exceptions.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "Based on the provided source code, in httpx:\n\n- `Response.stream()` is not explicitly defined as a method in the code snippets. However, there are methods such as `iter_bytes()`, `iter_text()`, and `iter_raw()` which are generators over the response content in different forms (bytes, text, raw bytes). These are iterator methods that allow streaming the response content piece by piece.\n\n- `Response.read()` is a method that reads and returns the entire response content as a bytes object. It caches the content in `self._content`, so subsequent calls return the same data without re-reading the stream.\n\n**Difference:**\n\n- `Response.stream()` (inferred from methods like `iter_bytes()`, `iter_text()`, and `iter_raw()`) provides an iterator over the response data, allowing the user to process it in chunks as it arrives, enabling streaming large responses efficiently.\n\n- `Response.read()` loads the entire response body into memory and returns it as a single bytes object, effectively consuming the stream fully at once.\n\n**File defining these methods:**\n\n- These methods are defined in the `_models.py` file, specifically within the `Response` class (see the section titled \"_models (Pages 12\u201312)\").\n\n**Exception when response has already been consumed:**\n\n- If you try to call `Response.read()` after the response content has already been consumed, it will raise a `ResponseNotRead` exception (defined in `_exceptions.py`). Similarly, attempting to iterate raw content with `iter_raw()` after consumption raises a `StreamConsumed` exception, and accessing the response stream after closing raises `StreamClosed`.\n\n**Summary:**\n\n- `Response.stream()` allows streaming the response content in chunks via iterator methods like `iter_bytes()`.\n- `Response.read()` fully consumes the response stream and caches the content in memory for quick subsequent access.\n- These methods are defined in the `Response` class within `_models.py`.\n- Attempting to read a response that has already been consumed raises a `ResponseNotRead` exception.",
+      "total_tokens": 66320,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 23.855,
+      "error": null,
+      "scores": {
+        "faithfulness": 0.0,
+        "code_qa_accuracy": 0.4525,
+        "symbol_recall": 0.6533
+      },
+      "composite_score": 0.3343,
+      "passed": false
+    },
+    {
+      "question_id": 17,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is `httpx.request()` in `_api.py` different from `httpx.get()` in the same file? Does `httpx.request()` support streaming? What is the default value of `follow_redirects` in each function?",
+      "ground_truth": "Both `httpx.request()` and `httpx.get()` are defined in `_api.py`. `httpx.get()` is a convenience wrapper that calls `httpx.request()` with `method='GET'`. Key differences: `httpx.request()` does NOT support streaming \u2014 it always fully reads the response. For streaming, users must use `httpx.stream()` (also in _api.py) which uses a context manager. `follow_redirects` default: in `httpx.request()` (and all the method shortcuts like `get()`, `post()`, etc.), `follow_redirects=False` by default. This is different from `Client.get()` where the client's configured default applies. The top-level functions default to NOT following redirects to avoid surprising behavior.",
+      "source_files": [
+        "_api.py",
+        "_client.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "Based on the content of `_api.py`, here is the detailed comparison and answers to your questions:\n\n1. Difference between `httpx.request()` and `httpx.get()` in `_api.py`:\n   - `httpx.request()` is a general-purpose function that allows you to specify the HTTP method explicitly (e.g., GET, POST, PUT, etc.). It provides full control over the request, including various optional parameters like headers, cookies, data, json, etc.\n   - `httpx.get()` (as well as other specific functions like `post()`, `put()`, etc.) are convenience wrappers around `httpx.request()`. They preset the method parameter to their respective HTTP method (e.g., 'GET' for `get()`) and may restrict or customize certain parameters suitable for that request type. For example, `get()` does not support a request body (`content`, `data`, or `json` parameters are not available).\n\n2. Does `httpx.request()` support streaming?\n   - The answer is yes; there exists a function called `stream()` in `_api.py`, which is an alternative to `httpx.request()` specifically designed for streaming responses. It uses `client.stream()` internally to enable streaming of the response body instead of loading it into memory all at once.\n\n3. Default value of `follow_redirects`:\n   - In `httpx.request()`, the default value of `follow_redirects` is `False`.\n   - In all other specific request functions (`get()`, `post()`, `put()`, etc.), the default value of `follow_redirects` is also `False`.\n\n**Summary:**\n- `httpx.request()` is the general method allowing explicit specification of the HTTP method and broad options.\n- `httpx.get()` etc., are convenience wrappers around `httpx.request()`, preset for specific methods.\n- `request()` supports streaming via the `stream()` function, which internally uses `client.stream()`.\n- The default value of `follow_redirects` in all functions shown is `False`.\n\nWould you like any additional details?",
+      "total_tokens": 6579,
+      "chunks_accessed": 1,
+      "sub_call_count": 4,
+      "elapsed_seconds": 6.551,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.4874,
+        "symbol_recall": 0.5217
+      },
+      "composite_score": 0.6737,
+      "passed": true
+    },
+    {
+      "question_id": 17,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is `httpx.request()` in `_api.py` different from `httpx.get()` in the same file? Does `httpx.request()` support streaming? What is the default value of `follow_redirects` in each function?",
+      "ground_truth": "Both `httpx.request()` and `httpx.get()` are defined in `_api.py`. `httpx.get()` is a convenience wrapper that calls `httpx.request()` with `method='GET'`. Key differences: `httpx.request()` does NOT support streaming \u2014 it always fully reads the response. For streaming, users must use `httpx.stream()` (also in _api.py) which uses a context manager. `follow_redirects` default: in `httpx.request()` (and all the method shortcuts like `get()`, `post()`, etc.), `follow_redirects=False` by default. This is different from `Client.get()` where the client's configured default applies. The top-level functions default to NOT following redirects to avoid surprising behavior.",
+      "source_files": [
+        "_api.py",
+        "_client.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "Based solely on the provided source code, in `_api.py`:\n\n- `httpx.request()` (defined in `_api.py`) is a general-purpose function that sends an HTTP request with the specified method and URL, and it internally creates a `Client` instance to perform the request. It supports all HTTP methods, request parameters, and multiple options such as `content`, `data`, `json`, etc. It explicitly opens a client context, performs the request, and then returns a `Response` object.\n\n- `httpx.get()` (also defined in `_api.py`) is a convenience wrapper function that specifically sends a `GET` request. It calls `request()` with the method `\"GET\"` and passes any parameters like `params`, `headers`, `cookies`, etc. It does not support request bodies (such as `content`, `data`, or `json`), per the documentation note.\n\n**Support for Streaming:**\n- `httpx.request()` (the general request function) does not have a parameter directly indicating streaming, but by default (as shown in the code), it does not stream the body \u2014 after request completion, it returns a `Response`, which can be used to stream content via methods like `iter_bytes()`, `iter_text()`, etc.\n- The `request()` function internally uses a `Client` context, and `client.request()` (the method) has a `stream: bool = False` parameter, which controls whether the response stream is fully read into memory or can be streamed. Since the wrapper `request()` does not pass `stream=True`, the default behavior is to **not** stream; it loads response content into memory (via `response.read()`) unless instructed otherwise at the lower level.\n\n- Similarly, `get()` calls `request()` with no mention of streaming support, so it also defaults to non-streaming behavior.\n\n**Default value of `follow_redirects`:**\n- In `httpx.request()`, the default value of `follow_redirects` is `False`.\n- In `httpx.get()`, the default value of `follow_redirects` is also `False`.\n\n**Summary:**\n- `httpx.request()` is a general method that handles any HTTP method and supports response streaming via controlling the `stream` parameter of `client.request()`. Its default `follow_redirects` is `False`.\n- `httpx.get()` is a specific method for `GET` requests, not supporting a request body, with default `follow_redirects` as `False`.\n\nThis only uses information from `__api__` in the provided source.",
+      "total_tokens": 66439,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 17.404,
+      "error": null,
+      "scores": {
+        "faithfulness": 0.8571,
+        "code_qa_accuracy": 0.5909,
+        "symbol_recall": 0.6377
+      },
+      "composite_score": 0.6934,
+      "passed": true
+    },
+    {
+      "question_id": 18,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "Where is the `URLPattern` class defined in httpx and what does it do? Which other class in another file uses `URLPattern` and for what purpose?",
+      "ground_truth": "`URLPattern` is defined in `_utils.py`. It is a utility class for matching URL patterns, used for proxy routing. A `URLPattern` wraps a URL string and provides matching logic to determine whether a given URL matches the pattern (based on scheme, host prefix, and port). It supports wildcard-style matching for proxy configurations like `'https://'` (all HTTPS URLs) or `'http://example.com'` (specific host). In `_client.py`, `URLPattern` is imported from `_utils.py` and used in `Client._transport_for_url()` to determine which transport (and thus which proxy) to use for a given request URL. The client stores a sorted list of `URLPattern` objects mapping patterns to transports.",
+      "source_files": [
+        "_utils.py",
+        "_client.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The class `URLPattern` is not explicitly visible in the fetched chunks. To determine its definition and purpose, I will need to locate additional references within the relevant files.\n\nGiven the focus on `httpx` and the clues from the TOC and the code, `URLPattern` is likely defined in one of the core modules. Based on naming conventions, it may be in `_urlparse.py` or `_urls.py`. I will first examine the `__init__.py` and `_urls.py` to locate references or definitions related to `URLPattern`.\n\nI will now proceed to locate its specific definition and usages.\n\nLet's examine `_urls.py`, as it could potentially contain class definitions or patterns related to URLs, including `URLPattern`. I'll fetch the content focusing on class definitions or import statements related to `URLPattern`.\n\nI'll start by retrieving the relevant parts of `_urls.py` to search for `URLPattern`.",
+      "total_tokens": 8894,
+      "chunks_accessed": 2,
+      "sub_call_count": 3,
+      "elapsed_seconds": 3.374,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.2541,
+        "symbol_recall": 0.2714
+      },
+      "composite_score": 0.5186,
+      "passed": false
+    },
+    {
+      "question_id": 18,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "Where is the `URLPattern` class defined in httpx and what does it do? Which other class in another file uses `URLPattern` and for what purpose?",
+      "ground_truth": "`URLPattern` is defined in `_utils.py`. It is a utility class for matching URL patterns, used for proxy routing. A `URLPattern` wraps a URL string and provides matching logic to determine whether a given URL matches the pattern (based on scheme, host prefix, and port). It supports wildcard-style matching for proxy configurations like `'https://'` (all HTTPS URLs) or `'http://example.com'` (specific host). In `_client.py`, `URLPattern` is imported from `_utils.py` and used in `Client._transport_for_url()` to determine which transport (and thus which proxy) to use for a given request URL. The client stores a sorted list of `URLPattern` objects mapping patterns to transports.",
+      "source_files": [
+        "_utils.py",
+        "_client.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "The `URLPattern` class is defined in the file `_urls.py` within the `httpx` library. Its purpose is to serve as a utility class for making lookups against proxy keys, facilitating pattern matching of URLs based on scheme, host, and port.\n\nSpecifically, the `URLPattern` class is used by the `HTTPTransport` class, which is defined in `_transports.default.py`. In the constructor of `HTTPTransport`, the attribute `self._mounts` is a dictionary that maps `URLPattern` instances (created from proxy key patterns or default entries) to corresponding transport configurations.\n\nThe `HTTPTransport` uses instances of `URLPattern` to determine which transport to handle a given URL by checking whether the pattern matches the URL. This matching process allows the transport to selectively apply proxy configurations or default transport settings depending on the URL\u2019s scheme, host, and port.\n\n**In summary:**\n\n- The `URLPattern` class is defined in `._urls.py`.\n- It creates pattern objects that match URLs based on scheme, host, and port.\n- The `HTTPTransport` class (in `_transports.default.py`) uses `URLPattern` objects in its `_mounts` attribute to decide whether a given URL matches a specific proxy or transport configuration, enabling flexible and pattern-based request routing.",
+      "total_tokens": 66165,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 16.364,
+      "error": null,
+      "scores": {
+        "faithfulness": 0.875,
+        "code_qa_accuracy": 0.4608,
+        "symbol_recall": 0.5857
+      },
+      "composite_score": 0.6307,
+      "passed": true
+    },
+    {
+      "question_id": 19,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is `get_environment_proxies()` in httpx, where is it defined, and what environment variables does it read? How does `Client` use it?",
+      "ground_truth": "`get_environment_proxies()` is defined in `_utils.py`. It reads proxy configuration from environment variables. The environment variables it reads are the standard proxy vars: `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY` (and their lowercase equivalents `http_proxy`, `https_proxy`, `all_proxy`), and `NO_PROXY` / `no_proxy` for proxy exclusions. In `_client.py`, when a `Client` is constructed with `trust_env=True` (the default), it calls `get_environment_proxies()` from `_utils.py` to populate the proxy configuration from environment variables. If `trust_env=False`, environment proxy variables are ignored entirely.",
+      "source_files": [
+        "_utils.py",
+        "_client.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "The function `get_environment_proxies()` in `httpx` is used to retrieve environment variables related to proxy configurations. It is defined in the internal utils module `_utils.py`. \n\nIt reads environment variables such as `HTTP_PROXY`, `http_proxy`, `HTTPS_PROXY`, `https_proxy`, and potentially other related variables to determine proxy settings for different protocols.\n\nThe `Client` class uses `get_environment_proxies()` within the `_get_proxy_map()` method to automatically detect proxy configurations from the environment when the `trust_env` parameter is enabled. Specifically, if proxies are not explicitly provided, and `trust_env` is `True`, it calls `get_environment_proxies()` to populate the proxy settings for the client, ensuring it respects environment-defined proxies.\n\n**Sources:**\n- `get_environment_proxies()` is in the `_utils.py` module.\n- The `Client` class uses it in the `_get_proxy_map()` method, which is responsible for assembling the proxy configuration based on environment variables and parameters passed during initialization.\n\nWould you like more details on the exact environment variables, or how this integrates with specific request workflows?",
+      "total_tokens": 75591,
+      "chunks_accessed": 6,
+      "sub_call_count": 9,
+      "elapsed_seconds": 21.714,
+      "error": null,
+      "scores": {
+        "faithfulness": 0.8889,
+        "code_qa_accuracy": 0.6498,
+        "symbol_recall": 0.62
+      },
+      "composite_score": 0.7275,
+      "passed": true
+    },
+    {
+      "question_id": 19,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "What is `get_environment_proxies()` in httpx, where is it defined, and what environment variables does it read? How does `Client` use it?",
+      "ground_truth": "`get_environment_proxies()` is defined in `_utils.py`. It reads proxy configuration from environment variables. The environment variables it reads are the standard proxy vars: `HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY` (and their lowercase equivalents `http_proxy`, `https_proxy`, `all_proxy`), and `NO_PROXY` / `no_proxy` for proxy exclusions. In `_client.py`, when a `Client` is constructed with `trust_env=True` (the default), it calls `get_environment_proxies()` from `_utils.py` to populate the proxy configuration from environment variables. If `trust_env=False`, environment proxy variables are ignored entirely.",
+      "source_files": [
+        "_utils.py",
+        "_client.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "The function `get_environment_proxies()` in `httpx` is defined in the `_utils` module, specifically in the section titled `_utils (Pages 24\u201324)`. It retrieves proxy configuration information from environment variables. \n\nIt reads the following environment variables:\n- `\"SSL_CERT_FILE\"`: If present, and points to a file, it returns that file path as a string.\n- `\"SSL_CERT_DIR\"`: If present, and points to a directory, it returns that directory path as a string.\n- Proxies for schemes `\"http\"`, `\"https\"`, and `\"all\"` via the `getproxies()` function from `urllib.request`. It iterates over these schemes and, if the proxy info exists for a scheme, it creates a mapping from `\"scheme://\"` to proxy URL (with `\"http://\"` prepended if not already included).\n\nSpecifically, it constructs a dictionary `mounts` mapping schemes to proxy URLs or `None`, based on these environment variables and the proxy info obtained through `getproxies()`.\n\n**How `Client` uses `get_environment_proxies()`:**  \nIn the `_client` module, inside the `Client` class, during initialization (`__init__` method), it calls `get_environment_proxies()` to obtain proxy settings from the environment **only if** `trust_env` is `True`. This occurs in the line:\n\n```python\nallow_env_proxies = trust_env and app is None and transport is None\nproxy_map = self._get_proxy_map(proxies, allow_env_proxies)\n```\n\nIf `allow_env_proxies` is `True`, then `_get_proxy_map()` (a method of `Client`) calls `get_environment_proxies()` to incorporate the environment proxy settings into the client's proxy configuration. This means environment variables are used to automatically configure proxies unless explicitly overridden or disabled via `trust_env=False`.",
+      "total_tokens": 66281,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 21.92,
+      "error": null,
+      "scores": {
+        "faithfulness": 0.7,
+        "code_qa_accuracy": 0.3077,
+        "symbol_recall": 0.58
+      },
+      "composite_score": 0.4995,
+      "passed": false
+    },
+    {
+      "question_id": 20,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "How does httpx handle SSL/TLS verification? Where is `create_ssl_context()` defined, what are the three possible values for the `verify` parameter, and what external library does httpx use for the default CA bundle?",
+      "ground_truth": "`create_ssl_context()` is defined in `_config.py`. The three possible values for `verify`: (1) `verify=True` (default) \u2014 creates an SSL context using the system CA bundle. If `SSL_CERT_FILE` or `SSL_CERT_DIR` environment variables are set (and trust_env=True), those are used. Otherwise, it uses `certifi.where()` \u2014 so the external library is `certifi` which provides the Mozilla CA certificate bundle. (2) `verify=False` \u2014 creates an SSLContext with `check_hostname=False` and `verify_mode=ssl.CERT_NONE`, disabling all verification. (3) `verify=ssl.SSLContext` \u2014 uses a custom SSL context directly, giving full control to the caller. Passing `verify=<str>` (a file path) is deprecated in newer versions and triggers a DeprecationWarning.",
+      "source_files": [
+        "_config.py",
+        "_client.py"
+      ],
+      "pipeline": "rlm",
+      "answer": "httpx handles SSL/TLS verification by using the `create_ssl_context()` function, which is imported from `.._config`. The `create_ssl_context()` function is responsible for creating an SSL context based on the provided `verify` parameter and other SSL-related arguments.\n\nThe `verify` parameter in `create_ssl_context()` can take three possible values:\n1. `True` \u2014 which means verify SSL certificates using the default CA bundle.\n2. `False` \u2014 which disables SSL verification.\n3. A string path \u2014 pointing to a custom CA bundle or directory to be used for verification.\n\nBy default, when `verify=True`, httpx uses an external library called `certifi` to load the default CA bundle.\n\nThis information is based on the code found in `base.py` and `default.py` within the `_transports` folder, where `create_ssl_context()` is imported and invoked to set up SSL contexts for `HTTPTransport` and `AsyncHTTPTransport`.",
+      "total_tokens": 6940,
+      "chunks_accessed": 2,
+      "sub_call_count": 4,
+      "elapsed_seconds": 4.601,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.4436,
+        "symbol_recall": 0.4865
+      },
+      "composite_score": 0.6469,
+      "passed": true
+    },
+    {
+      "question_id": 20,
+      "tier": 3,
+      "tier_label": "Cross-file call chain",
+      "question": "How does httpx handle SSL/TLS verification? Where is `create_ssl_context()` defined, what are the three possible values for the `verify` parameter, and what external library does httpx use for the default CA bundle?",
+      "ground_truth": "`create_ssl_context()` is defined in `_config.py`. The three possible values for `verify`: (1) `verify=True` (default) \u2014 creates an SSL context using the system CA bundle. If `SSL_CERT_FILE` or `SSL_CERT_DIR` environment variables are set (and trust_env=True), those are used. Otherwise, it uses `certifi.where()` \u2014 so the external library is `certifi` which provides the Mozilla CA certificate bundle. (2) `verify=False` \u2014 creates an SSLContext with `check_hostname=False` and `verify_mode=ssl.CERT_NONE`, disabling all verification. (3) `verify=ssl.SSLContext` \u2014 uses a custom SSL context directly, giving full control to the caller. Passing `verify=<str>` (a file path) is deprecated in newer versions and triggers a DeprecationWarning.",
+      "source_files": [
+        "_config.py",
+        "_client.py"
+      ],
+      "pipeline": "full_context",
+      "answer": "In `httpx`, SSL/TLS verification is managed through the function `create_ssl_context()`. This function constructs an `ssl.SSLContext` based on the parameters provided, handling various verification configurations.\n\nThe `create_ssl_context()` function is defined in the `_config` module, specifically in the file `\"_config (Pages 7\u20137)\"`. It takes the following parameters: `cert`, `verify`, `trust_env`, and `http2`, and returns an `ssl.SSLContext` instance configured accordingly.\n\nThe `verify` parameter can be:\n1. `True` \u2014 which indicates standard SSL verification against a default CA bundle.\n2. `False` \u2014 which disables SSL verification (no certificate validation).\n3. An `ssl.SSLContext` object \u2014 allowing a custom SSL context to be used.\n\nFor the default CA bundle, `httpx` relies on the external library `certifi`. Specifically, in `_config`, it imports `certifi` and uses `certifi.where()` to obtain the path to the CA bundle file (see the line `DEFAULT_CA_BUNDLE_PATH = Path(certifi.where())`). This CA bundle path is used when `verify` is a boolean `True` or when a specific path is provided that exists.\n\nIn summary:\n- `httpx` handles SSL verification via the `create_ssl_context()` function in `_config`.\n- The three possible `verify` values are: `True`, `False`, or an `ssl.SSLContext`.\n- The default CA bundle is provided by the `certifi` library, accessed via `certifi.where()`.",
+      "total_tokens": 66235,
+      "chunks_accessed": 24,
+      "sub_call_count": 1,
+      "elapsed_seconds": 18.223,
+      "error": null,
+      "scores": {
+        "faithfulness": 1.0,
+        "code_qa_accuracy": 0.5958,
+        "symbol_recall": 0.5405
+      },
+      "composite_score": 0.7262,
+      "passed": true
+    }
+  ]
+}
