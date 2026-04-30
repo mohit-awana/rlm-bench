@@ -182,10 +182,6 @@ rlm-bench/
 ├── scripts/
 │   └── download_data.sh      # copies httpx source from the installed package
 ├── results/                  # benchmark outputs and checkpoints
-└── paper/
-    ├── main.tex              # arXiv-ready manuscript source
-    ├── references.bib        # bibliography
-    └── arxiv_submission_metadata.txt
 ```
 
 ---
