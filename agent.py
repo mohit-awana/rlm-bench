@@ -18,7 +18,6 @@ import logging
 import uuid
 from typing import List, Type
 
-import ollama
 from pydantic import BaseModel
 
 from tools.rlm_tool import RLMTool, RLMInput, ToolRegistry
@@ -129,7 +128,6 @@ async def agent(
         _maybe_inject_turn_warning(messages, turn, max_turns)
 
         response = await asyncio.to_thread(
-            ollama.chat,
             model    = MODEL,
             messages = messages,
             tools    = registry.schemas(),
