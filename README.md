@@ -19,8 +19,6 @@ The benchmark compares two strategies over the same `httpx` source tree:
 - RLMTool, which reads a table of contents, fetches relevant chunks, stores partial findings, and reasons over external memory.
 - A full-context baseline, implemented in `rag/vanilla_rag.py` for historical compatibility, which stuffs the entire corpus into one prompt and answers in a single model call.
 
-The arXiv-ready manuscript source for this repo is in `paper/main.tex`; the legacy DOCX draft is kept at `rlm_bench_paper.docx`.
-
 ---
 
 ## Reported Results
