@@ -27,7 +27,6 @@ except ImportError:
 
 @dataclass(frozen=True)
 class Config:
-    # Generation model
     model:        str = "gpt-4.1-nano"
 
     # Embedding model (compatibility setting)
@@ -36,13 +35,11 @@ class Config:
     # Retrieval depth (compatibility setting)
     top_k:        int = 5
 
-    # Chunking
     chunk_size:   int = 500
 
     # Source code directory (legacy field name retained as pdf_path)
     pdf_path:     str = "data/httpx_src"
 
-    # DeepEval judge
     judge_model:  str = "gpt-4o"
 
     # OpenAI API key (read from env)

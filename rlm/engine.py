@@ -1,22 +1,10 @@
 """
-engine.py
----------
-RLMEngine — recursive inference loop using OpenAI gpt-4.1-nano.
+engine.py — recursive inference loop over ExternalMemory using OpenAI.
 
-Implementation notes
---------------------
-- Uses openai.AsyncOpenAI for all model calls (native async, no to_thread needed)
-- Token counting via response.usage.prompt_tokens + completion_tokens
-- Tool calls via OpenAI function-calling protocol (reliable, not text-parsed)
-- Auto-TOC injection on Turn 0 if model skips get_toc()
-- chunk_id parser handles float strings e.g. "2.1" → 2
-- Turn warning softened to avoid premature termination
-
-Tools exposed to the model
---------------------------
-  get_toc()              → compact table of contents
-  get_chunk(chunk_id)    → one section by integer id
-  record_partial(finding)→ store intermediate finding
+RLMEngine drives the tool-call loop: the model reads the TOC, fetches
+relevant file chunks, records partial findings, and produces a final answer.
+The full document never enters the context window — the model navigates via
+explicit tool calls (get_toc, get_chunk, record_partial).
 """
 
 from __future__ import annotations
@@ -188,7 +176,6 @@ class RLMEngine:
                     ),
                 })
 
-            # OpenAI async call
             response: ChatCompletion = await self._client.chat.completions.create(
                 model    = self.model,
                 messages = messages,
@@ -203,7 +190,6 @@ class RLMEngine:
                 response.usage.completion_tokens
             )
 
-            # Append assistant message
             messages.append(msg.model_dump(exclude_none=True))
 
             # No tool calls → model is done
@@ -220,7 +206,6 @@ class RLMEngine:
             tool_results = await self._execute_tools(msg.tool_calls, memory)
             await memory.record_result(msg.content or "", tokens_used)
 
-            # Append tool results
             for tool_call_id, tool_name, result_text in tool_results:
                 messages.append({
                     "role":         "tool",

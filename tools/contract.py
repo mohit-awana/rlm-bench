@@ -1,8 +1,5 @@
 """
-contract.py
------------
-ToolContract Protocol 
-
+contract.py — ToolContract protocol that every agent tool must implement.
 """
 
 from __future__ import annotations

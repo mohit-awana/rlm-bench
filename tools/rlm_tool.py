@@ -1,17 +1,11 @@
 """
-rlm_tool.py
------------
-RLMTool — the single tool exposed to the agent.
+rlm_tool.py — RLMTool exposed to the agent via ToolContract.
 
-The agent invokes the tool registry,
-RLMTool executes, and RLMEngine handles the recursive reasoning over the
-configured httpx source tree. All recursion, memory management, and token tracking
-happen inside. The agent sees none of it.
+RLMTool wraps RLMEngine behind a standard ToolContract interface.
+All recursive reasoning, memory management, and token tracking happen
+inside the engine — the agent sees only a question-in, answer-out call.
 
-Follows the exact same ToolContract / trace_tool / ToolRegistry pattern
-
-Usage
------
+Usage:
     registry = ToolRegistry(pdf_path="data/httpx_src")
     answer   = await agent("Trace the call chain for `httpx.get(url)`.", registry=registry)
 """
@@ -37,7 +31,7 @@ logger = logging.getLogger(__name__)
 
 
 # ---------------------------------------------------------------------------
-# trace_tool decorator — identical to original agent.py
+# trace_tool decorator — logs latency and errors for every tool execution
 # ---------------------------------------------------------------------------
 
 def trace_tool(func):
@@ -66,7 +60,7 @@ class RLMInput(BaseModel):
     model_config = ConfigDict(extra="forbid")
 
     question:    str
-    document_id: str = "httpx_src"    # for future multi-doc support
+    document_id: str = "httpx_src"
 
 
 class RLMOutput(BaseModel):
@@ -158,9 +152,7 @@ class RLMTool:
 
 class ToolRegistry:
     """
-    Mirrors the original ToolRegistry pattern exactly.
-    Engines and tool instances created ONCE at startup.
-    agent() looks up existing instances — never instantiates in a loop.
+    Builds and holds tool instances at startup — never re-created per query.
     """
 
     def __init__(

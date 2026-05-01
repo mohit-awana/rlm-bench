@@ -1,14 +1,16 @@
-from __future__ import annotations
 """
-Two-stage DeepEval evaluator:
-Stage 1: gpt-4.1-nano on all questions
-Stage 2: gpt-4o-mini scoring, with gpt-4o fallback on malformed judge output
+evaluator.py — two-stage DeepEval scoring cascade for benchmark results.
 
-Borderline trigger:
-- composite in [0.65,0.72]
-- OR symbol_recall < 0.60
-- OR faithfulness and code_qa_accuracy differ by >0.20
+Stage 1: gpt-4.1-nano (faithfulness) + gpt-4o-mini (Code QA Accuracy).
+Stage 2 escalates borderline cases to gpt-4o when:
+  - composite score in [0.65, 0.72]
+  - symbol_recall < 0.60
+  - faithfulness and code_qa_accuracy differ by more than 0.20
+
+Composite: 0.35 * Faithfulness + 0.45 * Code QA Accuracy + 0.20 * Symbol Recall
 """
+
+from __future__ import annotations
 
 import json,re,time,random,logging
 from pathlib import Path
@@ -274,7 +276,6 @@ class Evaluator:
 
       scored.append(row)
 
-      # -------- checkpoint every question -----
       save_checkpoint(scored)
 
       logger.info(

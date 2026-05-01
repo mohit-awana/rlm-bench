@@ -1,14 +1,11 @@
 """
-agent.py
---------
+agent.py — interactive demo agent for the httpx source corpus.
 
-  - RLMTool is the only tool
-  - ToolRegistry is configured with the source directory via cfg.pdf_path
+RLMTool is the only registered tool. Ask any question about httpx and
+the tool navigates the source tree using recursive document reasoning.
 
-Usage
------
+Usage:
     python agent.py
-    > Ask question: Trace the complete call chain when a user calls `httpx.get(url)`.
 """
 
 from __future__ import annotations
@@ -39,7 +36,7 @@ SYSTEM = (
 )
 
 # ---------------------------------------------------------------------------
-# Guarded execution — unchanged from original
+# Guarded execution
 # ---------------------------------------------------------------------------
 
 async def guarded_execute(
@@ -60,7 +57,7 @@ async def guarded_execute(
 
 
 # ---------------------------------------------------------------------------
-# _append_tool_result — unchanged from original
+# _append_tool_result
 # ---------------------------------------------------------------------------
 
 async def _append_tool_result(
@@ -82,7 +79,7 @@ async def _append_tool_result(
 
 
 # ---------------------------------------------------------------------------
-# Turn warning — unchanged from original
+# Turn warning
 # ---------------------------------------------------------------------------
 
 def _maybe_inject_turn_warning(
@@ -103,7 +100,7 @@ def _maybe_inject_turn_warning(
 
 
 # ---------------------------------------------------------------------------
-# Agent — unchanged from original except registry type
+# Agent loop
 # ---------------------------------------------------------------------------
 
 async def agent(

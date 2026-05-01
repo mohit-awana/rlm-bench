@@ -82,7 +82,6 @@ class ExternalMemory:
         self._chunks: Dict[int, Chunk] = {c.chunk_id: c for c in chunks}
         self._toc: str = Chunker.toc(chunks)
 
-        # Run identity
         self._run_id   = run_id
         self._question = question
 

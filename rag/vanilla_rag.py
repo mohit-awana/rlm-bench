@@ -1,6 +1,6 @@
 """
-full_context_baseline.py (imported as vanilla_rag for compatibility)
----------------------------------------------------------------------
+vanilla_rag.py — full-document long-context baseline (module name kept for runner.py compatibility).
+
 FullContextBaseline — the natural comparison for RLM.
 
 This is NOT RAG. This is the full-document long-context baseline:
